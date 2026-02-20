@@ -153,6 +153,214 @@ function processConstituencyMap(event) {
 }
 
 
+function filteringPipeline(rawData, dataMap) {
+  const filteredByFTE = filterRawDataByTotalFTE(rawData);
+  const data = convertDataToMFSData(filteredByFTE);
+  const constituencyData = data[0];
+  const unknownConstituency = data[1];
+
+  const constituencyData = selectHighestFTEConstituencies(constituencyData);
+  const knownConstituencies = constituencyData[0];
+  const unknownDualConstituencies = constituencyData[1];
+}
+
+
+/* 
+ * Filtering the data based on who is at least half-time
+ *
+ * If constituents dont have Total FTE >= 0.5, they don't qualify to vote.
+ *
+ */
+function filterRawDataByTotalFTE(rawData) {
+  const filteredData = rawData.filter((entry) => entry["TOT_FTE"] >= 0.5);
+
+  const numEntriesFiltered = rawData.length - filteredData.length;
+  console.log("Total FTE >= 0.5:", numEntriesFiltered, "rows filtered out.");
+
+  return filteredData;
+}
+
+/*
+ * Convert the raw data to cleaner data, made up of just
+ * the stuff that the MFS needs.
+ *
+ * Constituencies are tricky to convert, so we use a map.
+ * Determine the constituency of each entry according to
+ * SEC shortcodes. 
+ *
+ * Some constituencies are determined with two key columns, some
+ * are determined with only one key column. We check both.
+ * 
+ * Note that some of the headers are hardcoded and may change:
+ * "UH Deptid Branc", "UH Deptid Divis", "MFS_codes".
+ */
+function convertDataToMFSData(inputData, dataMapCSV) {
+
+  // These are the keys that have identify constituency
+  // Some constituencies only depend on keyCol1
+  // Some depend on both keyCol1 and keyCol2
+  const keyCol1 = "UH Deptid Divis";
+  const keyCol2 = "UH Deptid Branc";
+
+  // Set each key in the dataMap to an empty list.
+  let dataMap = new Map();
+  for (const entry of dataMapCSV) {
+    const key1 = entry[keyCol1] + ',' + entry[keyCol2];
+    const key2 = entry[keyCol1];
+    if (entry[keyCol2] != null) {
+      dataMap.set(key1, entry["MFS_codes"]);
+    } else {
+      dataMap.set(key2, entry["MFS_codes"]);
+    }
+  }
+
+  // Make two lists incase any constituencies can't be identified by the dataMap
+  let constituencyData = [];
+  let unknownConstituency = [];
+  
+  // for every row in the input data, 
+  for (const oldRow of filteredData) {
+    const keyAttempt1 = oldRow[keyCol1] + ',' + oldRow[keyCol2];
+    const keyAttempt2 = oldRow[keyCol1];
+
+    // New data looks like this, store the old row just incase
+    let nameList = oldRow["Name"].split(',');
+    let lastName = nameList[0].replaceAll(" ", "_");
+    let firstName = nameList[1].replaceAll(" ", "_");
+    let newRow = {
+      "FirstName":        firstName,
+      "LastName":         lastName,
+      "Name":             oldRow["Name"],
+      "Email":            oldRow["Email"],
+      "Constituency":     null,
+      "Department Descr": oldRow["Department Descr"],
+      "UH Deptid Divis":  oldRow["UH Deptid Divis"],
+      "UH Deptid Branc":  oldRow["UH Deptid Branc"],
+      "UH Deptid Secti":  oldRow["UH Deptid Secti"],
+      "TenureStat":       oldRow["TenureStat"],
+      "Tenure Desc":      oldRow["Tenure Desc"],
+      "FTE":              oldRow["FTE"],
+      "TOT_FTE":          oldRow["TOT_FTE"],
+      //"OriginalData":     oldRow,
+    };
+
+    if (dataMap.has(keyAttempt1)) {
+      newRow["Constituency"] = dataMap.get(keyAttempt1);
+      constituencyData.push(newRow);
+
+    } else if (dataMap.has(keyAttempt2)) {
+      newRow["Constituency"] = dataMap.get(keyAttempt2);
+      constituencyData.push(newRow);
+
+    } else {
+      unknownConstituency.push(oldRow);
+    }
+  }
+
+  console.log(constituencyData);
+  console.log(unknownConstituency);
+  console.log("Mapping raw data to constituencies:", unknownConstituency.length, "entries have unknown constituency");
+  return [constituencyData, unknownConstituency];
+}
+
+/* 
+ * Filtering data based on Full Time Employment levels.
+ *
+ * We already know the Total Full Time Employment is >= 0.5
+ *
+ * Some people have several constituencies, so one email can
+ * appear on several rows. We want to keep only one entry.
+ *
+ * The entry with the highest FTE is kept.
+ * Ties are stored for manual review.
+ */
+function selectHighestFTEConstituency(inputData) {
+
+  // Make two arrays, one for resolved constituencies, one for unresolved dual constituencies
+  let unresolvedDualConstituencies = [];
+  let resolvedConstituencies = [];
+
+
+  let map = new Map();
+
+  // Give each unique email an empty list
+  for (const row of inputData) {
+    map.set(row["Email"], [])
+  }
+
+  // Add each row to it's email's list
+  for (const row of inputData) {
+    map.get(row["Email"]).push(row);
+  }
+
+  // For every key and value pair in the map
+  // email is equal to the unique email
+  // rows is equal to the list of rows with that email
+  for (const [email, rows] of map) {
+
+    if (rows.length == 1) { // Trivial, just one row
+      resolvedConstituencies.push(rows[0]);
+
+    } else { // More than one row
+
+      // Make a new map to sum constituency FTE counts
+      let constituencyFTEMap = new Map();
+
+      // Initialize each constituency total to zero FTE
+      for (const row of rows) {
+        const key = row["Constituency"];
+        constituencyFTEMap.set(key, 0.0);
+      }
+
+      // For every entry, add the FTE to the corresponding constituency total
+      for (const row of rows) {
+        const key = row["Constituency"];
+        constituencyFTEMap.set(key, row["FTE"] + constituencyFTEMap.get(key));
+      }
+
+      // Convert the map to a list so it can be sorted
+      let fteSumList = [];
+      for (const [constituency, sumFTE] of constituencyFTEMap) {
+        fteSumList.push({ "Constituency": constituency, "FTE": sumFTE });
+      }
+      // Sort in descending order based on FTE
+      fteSumList.sort((a, b) => b["FTE"] - a["FTE"]);
+
+      // Criteria for determining whether or not a tie exists between constituency FTEs
+      const tied = fteSumList.length > 1 && fteSumList[0]["FTE"] == fteSumList[1]["FTE"];
+
+      if (tied) {
+        // There's a tie
+        // Add all the rows with this email to be manually checked
+        unresolvedDualConstituencies.concat(value)
+      } else {
+        // Not tied, reduce to one row and set constituency to highest FTE
+
+        // Find rows with matching constituency, ensures other row data is constistent
+        let matchingConstituencyRows = []
+        for (const row of rows) {
+          if (row["Constituency"] == fteSumList[0]["Constituency"]) {
+            matchingConstituencyRows.push(row);
+          }
+        }
+
+        let newRow = matchingConstituencyRows[0];
+        // Set the FTE to the sum, incase a constituency was split across multiple rows
+        newRow["FTE"] = fteSumList[0]["FTE"];
+
+        outputData.push(newRow);
+      }
+    }
+  }
+  
+  console.log(resolvedConstituencies);
+  console.log(unresolvedDualConstituencies);
+  console.log("Choosing the highest FTE:", unresolvedDualConstituencies.length, "people have constituencies with tied FTEs");
+
+  return [resolvedConstituencies, unresolvedDualConstituencies];
+}
+
+
 
 
 function filterData(inputData, dataMapCSV) {
