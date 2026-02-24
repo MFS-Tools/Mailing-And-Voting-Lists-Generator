@@ -1,28 +1,3 @@
-
-function unParseWithLib(parsedCSV) {
-  return Papa.unparse(parsedCSV, {
-    header: false, // Treat first row as an object header
-  });
-}
-
-
-
-
-function toListServData(inputObject) {
-  let outputObject = {
-    "Name": inputObject["Name"],
-    "Email": inputObject["Email"],
-  };
-  return outputObject
-}
-
-function objectToOpaVoteArray(rowObject) {
-  let rowArray = [
-    rowObject.email,
-  ];
-  return rowArray;
-}
-
 // Globals that should be loaded by processInputCSVData and processConstituencyMap
 let inputCSVData = null;
 let constituencyMap = null;
@@ -162,6 +137,10 @@ function filteringPipeline(rawData, dataMap) {
   const constituencyData = selectHighestFTEConstituencies(constituencyData);
   const knownConstituencies = constituencyData[0];
   const unknownDualConstituencies = constituencyData[1];
+
+  // Before proceeding: resolve unknown dual constituencies somehow.
+  // Splice the resolved data back in.
+
 }
 
 
@@ -609,27 +588,6 @@ function filterData(inputData, dataMapCSV) {
 
   const currentYear = new Date().getFullYear();
   createCSVDownloadButton(outputData, "Congress_" + currentYear + ".csv", ",", true);
-  /*
-  const totalListWithRawData = 
-    Papa.unparse(outputData,
-      {
-        delimiter: ",",
-        header: true,
-      }
-    );
-  let newblob1 = new Blob([totalListWithRawData], { type: 'text/csv' });
-  let downloadCongress = document.createElement("button");
-  downloadCongress.onclick = function() {
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(newblob1);
-    link.download = "ListServ_Congress_MFS_2026.csv";
-    link.click();
-  };
-
-
-  downloadCongress.innerText = "Congress.csv";
-  document.body.appendChild(downloadCongress);
-  */
   
   // Splitting for ListServ
   // Must be space delimited
@@ -669,26 +627,6 @@ function filterData(inputData, dataMapCSV) {
     restOfData = restOfData.filter(row => row["Constituency"] !== filterString);
 
     createCSVDownloadButton(listServCSV, filename, " ", false);
-    /*
-    const csvToDownload = 
-      Papa.unparse(listServCSV,
-        {
-          delimiter: " ",
-          header: false,
-        }
-      );
-    let blob = new Blob([csvToDownload], { type: 'text/csv' });
-    let downloadButton = document.createElement("button");
-    downloadButton.onclick = function() {
-      let link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename.concat(".csv");
-      link.click();
-    };
-
-    downloadButton.innerText = filename;
-    document.body.appendChild(downloadButton);
-    */
   }
 
   restOfData = outputData;
@@ -707,50 +645,8 @@ function filterData(inputData, dataMapCSV) {
     createCSVDownloadButton(opaVoteCSV, filename, ",", false);
   }
   createCSVDownloadButton(senatorStats, "SenatorStats_" + currentYear + ".csv", ",", true);
-  /*
-  const csvToDownload = 
-    Papa.unparse(senatorStats,
-      {
-        delimiter: ",",
-        header: true,
-      }
-    );
-  let blob = new Blob([csvToDownload], { type: 'text/csv' });
-  let downloadButton = document.createElement("button");
-  downloadButton.onclick = function() {
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = "SenatorStats.csv";
-    link.click();
-  };
-
-  downloadButton.innerText = "SenatorStats.csv";
-  document.body.appendChild(downloadButton);
-  */
 
   createCSVDownloadButton(manualCheckData, "ManualCheckData_" + currentYear + ".csv", ",", true);
-  /*
-  const manualCheckCSV = 
-    Papa.unparse(manualCheckData,
-      {
-        delimiter: ",",
-        header: true,
-      }
-    );
-
-  let newblob = new Blob([manualCheckCSV], { type: 'text/csv' });
-  let downloadManual = document.createElement("button");
-  downloadManual.onclick = function() {
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(newblob);
-    link.download = "ManualCheckData.csv";
-    link.click();
-  };
-
-  downloadManual.innerText = "ManualCheckData.csv";
-  document.body.appendChild(downloadManual);
-  */
-
 
   // Splitting for OpaVote
   // opavote folder
@@ -759,9 +655,115 @@ function filterData(inputData, dataMapCSV) {
   // email_name_CONSTITUENCY.csv
 }
 
-// While parsing csvs is async,
-// unparsing csvs is not async :D
-function createCSVDownloadButton(arrayData, filename, delimiter, keepHeader) {
+/*
+ * Generates statistics for each constituency automatically
+ */
+function generateSenatorStatistics(rows, divName) {
+  let senatorStats = [];
+  let restOfData = rows;
+  for (while restOfData.length != 0) {
+
+    /*
+     * Choose the top row's constituency arbitrarily
+     * Filter out all rows with the same constituency
+     * Format the raw data into output data
+     */
+    let filterString = restOfData[0]["Constituency"];
+    let singleConstituencyData = restOfData.filter(row => row["Constituency"] === filterString);
+    restOfData = restOfData.filter(row => row["Constituency"] !== filterString);
+
+    let senatorStat = {
+      "Constituency": filterString,
+      "Number of People": singleConstituencyData.length,
+      "Number of Senators": Math.ceil(parseFloat(singleConstituencyData.length) / 30.0)
+    }
+    senatorStats.push(senatorStat);
+  }
+
+  let filename = "SenatorStats_" + new Date().getFullYear() + ".csv";
+  createCSVDownloadButton(senatorStats, filename, ",", true, divName);
+}
+
+/*
+ * Generates ListServ CSVs for each constituency automatically
+ */
+function generateListServCSVs(rows, divName) {
+  // UH MFS email to add to the top of the listserv data
+  const uhmfsEmail = "uhmfs@hawaii.edu";
+  const uhmfsListServ =
+    {
+      "Email": uhmfsEmail,
+      "FirstName": "John",
+      "LastName": "Kinder",
+    };
+
+  let senatorStats = [];
+  for (while restOfData.length != 0) {
+    /*
+     * Choose the top row's constituency arbitrarily
+     * Filter out all rows with the same constituency
+     * Format the raw data into output data
+     */
+    let filterString = restOfData[0]["Constituency"];
+    let singleConstituencyData = restOfData.filter(row => row["Constituency"] === filterString);
+    restOfData = restOfData.filter(row => row["Constituency"] !== filterString);
+    
+    let listServData = singleConstituencyData.map((row) =>
+      (
+        {
+          "Email": row["Email"],
+          "FirstName": row["FirstName"],
+          "LastName": row["LastName"],
+        }
+      ));
+    listServCSV.unshift(uhmfsListServ);
+
+    let filename = "listserv_email_name_" + filterString + "_" + currentYear + ".csv";
+    createCSVDownloadButton(listServCSV, filename, " ", false, divName);
+  }
+}
+
+function generateOpaVoteCSVs(rows, divName) {
+  // UH MFS email to add to the top of the opavote data
+  const uhmfsEmail = "uhmfs@hawaii.edu";
+  const uhmfsOpaVote = { "Email": uhmfsEmail };
+
+  restOfData = rows;
+  for (let i = 0; i < 19; i++) {
+    console.log(restOfData);
+    // Splitting into files based on constituency
+    let filterString = restOfData[0]["Constituency"];
+    let filename = "opavote_email_" + filterString + "_" + currentYear + ".csv";
+    let singleConstituencyCSV = restOfData.filter(row => row["Constituency"] === filterString);
+    let opaVoteCSV = singleConstituencyCSV.map((row) =>
+      ({ "Email": row["Email"],
+      }));
+    opaVoteCSV.unshift(uhmfsOpaVote);
+    restOfData = restOfData.filter(row => row["Constituency"] !== filterString);
+
+    createCSVDownloadButton(opaVoteCSV, filename, ",", false, divName);
+  }
+}
+
+
+/*
+ * createCSVDownloadButton(...):
+ * 
+ * Params:
+ *
+ * - arrayData: The rows of objects to be converted into a CSV file
+ * - filename: The name of the file to download, be sure to include ".csv"
+ * - delimiter: The value separator of choice, for example ',' for commas, or ' ' for spaces
+ * - keepHeader: Whether you want the first row to be a header, using object keys as header names
+ * - divName: The id of the div where you want the download button to appear.
+ *
+ * Details:
+ * 
+ *  - Parsing a list of objects into a csv is done with Papa.unparse(...), which returns a string
+ *  - The string is then turned into a JavaScript Blob object to be downloaded
+ *  - A download button is created, and put into a div determined by divName
+ */
+function createCSVDownloadButton(arrayData, filename, delimiter, keepHeader, divName) {
   const csv = 
     Papa.unparse(arrayData,
       {
@@ -778,7 +780,7 @@ function createCSVDownloadButton(arrayData, filename, delimiter, keepHeader) {
     link.click();
   };
   downloadButton.innerText = "Download " + filename;
-  document.body.appendChild(downloadButton);
+  document.getElementById(divName).appendChild(downloadButton);
 }
 
 
@@ -823,7 +825,7 @@ downloadBlob(blob, filename1 + "_MFS_2025");
 
 
 
-
+/*
 
 
 function convertCSVToBlob(csvRows) {
@@ -837,7 +839,7 @@ function downloadBlob(blob, filename) {
   link.download = filename.concat(".csv");
   link.click();
 }
-
+*/
 /*
 let csv = getCSV();
 
@@ -862,7 +864,7 @@ function getCSV() {
 
 
 
-
+/*
 
 function rawCSVTo2DArray(rawCSV) {
   let fileNotEnded = true;
@@ -942,4 +944,31 @@ function inputDataArrayToObject(rowArray) {
   };
   return rowObject;
 }
+*/
 
+
+/*
+function unParseWithLib(parsedCSV) {
+  return Papa.unparse(parsedCSV, {
+    header: false, // Treat first row as an object header
+  });
+}
+
+
+
+
+function toListServData(inputObject) {
+  let outputObject = {
+    "Name": inputObject["Name"],
+    "Email": inputObject["Email"],
+  };
+  return outputObject
+}
+
+function objectToOpaVoteArray(rowObject) {
+  let rowArray = [
+    rowObject.email,
+  ];
+  return rowArray;
+}
+*/
