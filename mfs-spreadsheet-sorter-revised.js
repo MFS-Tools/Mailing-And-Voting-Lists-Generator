@@ -33,6 +33,11 @@ function processFiles() {
 }
 
 
+/*
+ * This function and the next two have duplicate code.
+ * Can be reduced/abstracted away by only changing the
+ * callback function specified in "complete:"
+ */
 function processCSV(event) {
   console.log("processCSV called");
   const file = event.target.files[0];
@@ -84,7 +89,9 @@ function processConstituencyMap(event) {
   }
 }
 
-
+/*
+ * This function is pretty confusingly named, change in the future.
+ */
 function processManualInput(event) {
   console.log("processManualInput called");
   const file = event.target.files[0];
@@ -110,14 +117,59 @@ function processManualInput(event) {
   }
 }
 
-
+/*
+ * The main pipeline for filtering data into CSVs
+ * 1. filter rows by FTE, any < 0.5 get dropped.
+ *
+ * 2. Convert data to MFS Data, determining a constituency.
+ *    - If unknownConstituency contains any entries,
+ *      the DataMap csv file might be faulty.
+ *
+ * 3. Collapse rows so that only one row exists for
+ *    each unique email. Choose a row that the faculty
+ *    member has the highest constituency in.
+ *
+ * 4. Handle any unresolved (tied) dual constituencies.
+ *    The old method was messy and incomplete.
+ *    Here are some options:
+ *    1. Output the CSV and format it manually in google sheets.
+ *       - Pros: You have a record of the ties.
+ *       - Cons: Can get misconfigured.
+ *    2. Resolve it on the website with constituency dropdowns for each member.
+ *       - Pros: Can't misconfigure.
+ *               Can also just save a record of the ties separately if you want to.
+ *       - Cons: More coding, not an issue though.
+ *
+ * 5. Create a hardcoded row for the UHMFS email,
+ *    it will be spliced into the ListServs and OpaVotes.
+ *    It will not be spliced into the main data,
+ *    to not conflict with generating Senator Statistics.
+ * 
+ * 6. Create a button to save the overall Congress list which:
+ *    - Is fully filtered for 0.5+ FTE.
+ *    - Has fully resolved constituencies.
+ *    - Preserves all the raw data pertaining to that constituency.
+ *    - Can be downloaded as a record CSV.
+ * 
+ * 7. Format a copy of the data as ListServ CSVs
+ *    - Create a download button for each ListServ CSV
+ *
+ * 8. Format a copy of the data as OpaVote CSVs
+ *    - Create a download button for each OpaVote CSV
+ *
+ * 9. Take a copy of the data and count how many
+ *    faculty are in each constituency. Then calculate
+ *    how many senators should be in each constituency.
+ *    - Create a download button for this.
+ *
+ */
 function filteringPipeline(rawData, dataMap) {
   const filteredByFTE = filterRawDataByTotalFTE(rawData);
-  const data = convertDataToMFSData(filteredByFTE);
-  const constituencyData = data[0];
+  const data = convertDataToMFSData(filteredByFTE, dataMap);
+  const constituencyRawData = data[0];
   const unknownConstituency = data[1];
 
-  const constituencyData = selectHighestFTEConstituencies(constituencyData);
+  const constituencyData = selectHighestFTEConstituencies(constituencyRawData);
   const knownConstituencies = constituencyData[0];
   const unknownDualConstituencies = constituencyData[1];
 
@@ -145,10 +197,12 @@ function filteringPipeline(rawData, dataMap) {
 
 
 
-  generateCongressCSV(rows, divName, uhmfsRow);
-  generateListServCSVs(rows, divName, uhmfsRow);
-  generateOpaVoteCSVs(rows, divName, uhmfsRow);
-  generateSenatorStatistics(rows)
+  const rows = knownConstituencies;
+
+  generateCongressList(rows, "congress-download", uhmfsRow);
+  generateListServCSVs(rows, "listserv-download", uhmfsRow);
+  generateOpaVoteCSVs(rows, "opavote-download", uhmfsRow);
+  generateSenatorStatistics(rows, "senator-statistics-download");
 }
 
 /* 
@@ -158,11 +212,12 @@ function filteringPipeline(rawData, dataMap) {
  *
  */
 function filterRawDataByTotalFTE(rawData) {
-  const filteredData = rawData.filter((entry) => entry["TOT_FTE"] >= 0.5);
+  const filteredData = rawData.filter((row) => parseFloat(row["TOT_FTE"]) >= 0.5);
 
   const numEntriesFiltered = rawData.length - filteredData.length;
   console.log("Total FTE >= 0.5:", numEntriesFiltered, "rows filtered out.");
 
+  console.log(filteredData);
   return filteredData;
 }
 
@@ -206,7 +261,7 @@ function convertDataToMFSData(inputData, dataMapCSV) {
   let unknownConstituency = [];
   
   // for every row in the input data, 
-  for (const oldRow of filteredData) {
+  for (const oldRow of inputData) {
     const keyAttempt1 = oldRow[keyCol1] + ',' + oldRow[keyCol2];
     const keyAttempt2 = oldRow[keyCol1];
 
@@ -262,7 +317,7 @@ function convertDataToMFSData(inputData, dataMapCSV) {
  * The entry with the highest FTE is kept.
  * Ties are stored for manual review.
  */
-function selectHighestFTEConstituency(inputData) {
+function selectHighestFTEConstituencies(inputData) {
 
   // Make two arrays, one for resolved constituencies, one for unresolved dual constituencies
   let unresolvedDualConstituencies = [];
@@ -317,14 +372,12 @@ function selectHighestFTEConstituency(inputData) {
       // Criteria for determining whether or not a tie exists between constituency FTEs
       const tied = fteSumList.length > 1 && fteSumList[0]["FTE"] == fteSumList[1]["FTE"];
 
-      if (tied) {
-        // There's a tie
-        // Add all the rows with this email to be manually checked
-        unresolvedDualConstituencies.concat(value)
-      } else {
-        // Not tied, reduce to one row and set constituency to highest FTE
+      if (tied) { // Add all the rows with this email to be manually checked
 
-        // Find rows with matching constituency, ensures other row data is constistent
+        unresolvedDualConstituencies.concat(rows);
+
+      } else { // Not tied, select the row with the highest FTE.
+
         let matchingConstituencyRows = []
         for (const row of rows) {
           if (row["Constituency"] == fteSumList[0]["Constituency"]) {
@@ -336,7 +389,7 @@ function selectHighestFTEConstituency(inputData) {
         // Set the FTE to the sum, incase a constituency was split across multiple rows
         newRow["FTE"] = fteSumList[0]["FTE"];
 
-        outputData.push(newRow);
+        resolvedConstituencies.push(newRow);
       }
     }
   }
@@ -351,12 +404,14 @@ function selectHighestFTEConstituency(inputData) {
 function generateCongressList(rows, divName, uhmfsEmailRow) {
   let congress = Array.from(rows);
   // Add UHMFS email to the top
-  congress.unshift(uhmfsEntry);
+  congress.unshift(uhmfsEmailRow);
   let filename = "Congress_" + new Date().getFullYear() + ".csv";
   createCSVDownloadButton(congress, filename, ",", true, divName);
 }
 
-function generateCongressListServ(rows, divName, uhmfsEmailRow)
+function generateCongressListServ(rows, divName, uhmfsEmailRow) {
+
+}
 
 /*
  * Generates statistics for each constituency automatically
@@ -364,7 +419,7 @@ function generateCongressListServ(rows, divName, uhmfsEmailRow)
 function generateSenatorStatistics(rows, divName) {
   let senatorStats = [];
   let restOfData = rows;
-  for (while restOfData.length != 0) {
+  while (restOfData.length != 0) {
 
     /*
      * Choose the top row's constituency arbitrarily
@@ -402,7 +457,8 @@ function generateListServCSVs(rows, divName, uhmfsEmailRow) {
     };
 
   let senatorStats = [];
-  for (while restOfData.length != 0) {
+  let restOfData = rows;
+  while (restOfData.length != 0) {
     /*
      * Choose the top row's constituency arbitrarily
      * Filter out all rows with the same constituency
@@ -412,16 +468,12 @@ function generateListServCSVs(rows, divName, uhmfsEmailRow) {
     let singleConstituencyData = restOfData.filter(row => row["Constituency"] === constituencyName);
     restOfData = restOfData.filter(row => row["Constituency"] !== constituencyName);
 
-    let filename = "listserv_email_name_" + filterString + "_" + new Date().getFullYear() + ".csv";
-    generateSingleListServ(singleConstituencyData, divName, uhmfsEmailRow, filename);
-    
-
-    createCSVDownloadButton(listServCSV, filename, " ", false, divName);
+    generateSingleListServ(singleConstituencyData, constituencyName, divName, uhmfsEmailRow);
   }
 }
 
-function generateSingleListServ(rows, divName, uhmfsEmailRow, filename) {
-  let listServData = rows.map((row) =>
+function generateSingleListServ(rows, constituencyName, divName, uhmfsEmailRow) {
+  let listServCSV = rows.map((row) =>
     (
       {
         "Email": row["Email"],
@@ -447,11 +499,11 @@ function generateSingleListServ(rows, divName, uhmfsEmailRow, filename) {
  * Generates a single OpaVote CSV
  */
 function generateSingleOpaVoteCSV(rows, constituencyName, divName, uhmfsEmailRow) {
-  let opaVoteCSV = singleConstituencyCSV.map((row) =>
+  let opaVoteCSV = rows.map((row) =>
     ({ "Email": row["Email"], }));
   
   // Add uhmfs email to the top
-  opaVoteCSV.unshift({ "Email": uhmfsRow["Email"] });
+  opaVoteCSV.unshift({ "Email": uhmfsEmailRow["Email"] });
 
   let filename = "opavote_email_" + constituencyName + "_" + new Date().getFullYear() + ".csv";
   createCSVDownloadButton(opaVoteCSV, filename, ",", false, divName);
