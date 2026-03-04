@@ -2,24 +2,32 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-  <h1>Raw Data Input:</h1>
-  <input id="data-input" type="file">Data Input</input>
-  <h1>Data Map Input:</h1>
-  <input id="constituency-map-input" type="file">Constituency Map Input</input>
+  <script src="mfs-spreadsheet-sorter-revised.js"></script>
+
+  <h1>Faculty Congress CSV File from Human Resources:</h1>
+  <input id="data-input" type="file"></input>
+  <h1>Translation Table Between HR Codes and MFS Constituencies:</h1>
+  <input id="constituency-map-input" type="file"></input>
+  <h1>John's Dual Appointment Faculty CSV File:</h1>
+  <input id="dual-appointments" type="file"></input>
   <h1>Process Files:</h1>
   <button id="process-button">Process Files</button>
-  <!--<input id="manual-data-input" type="file">Manual Data Input</input>
-  <br />
-<p id="text-box"></p>-->
 
   <br />
   <h1>Congress Download</h1>
-  <div id="congress-download"></div>
+  <div>
+    <ul id="congress-download"></ul>
+  </div>
   <h1>Senator Statistics Download</h1>
-  <div id="senator-statistics-download"></div>
+  <div>
+    <ul id="senator-statistics-download"></ul>
+  </div>
   <h1>ListServ Download</h1>
-  <div id="listserv-download"></div>
+  <div>
+    <ul id="listserv-download"></ul>
+  </div>
   <h1>OpaVote Download</h1>
-  <div id="opavote-download"></div>
-  <script src="mfs-spreadsheet-sorter-revised.js"></script>
+  <div>
+    <ul id="opavote-download"></ul>
+  </div>
 </body>

@@ -9,7 +9,7 @@ const content = document.getElementById("text-box");
 const csvInput = document.getElementById("data-input");
 const constituencyMapInput = document.getElementById("constituency-map-input");
 const processButton = document.getElementById("process-button");
-const manualInput = document.getElementById("manual-data-input");
+const dualAppointments = document.getElementById("dual-appointments");
 
 // Set input/button callback functions.
 csvInput.addEventListener("change", processCSV);
@@ -89,10 +89,7 @@ function processConstituencyMap(event) {
   }
 }
 
-/*
- * This function is pretty confusingly named, change in the future.
- */
-function processManualInput(event) {
+function processDualAppointments(event) {
   console.log("processManualInput called");
   const file = event.target.files[0];
   if (file) {
@@ -105,7 +102,7 @@ function processManualInput(event) {
 
       // Callback function once processing finishes
       complete: function(results) {
-        manualCheckedData = results.data;
+        dualAppointments = results.data;
         console.log("File Loaded: ", manualCheckedData);
       },
 
@@ -519,10 +516,10 @@ function generateOpaVoteCSVs(rows, divName, uhmfsEmailRow) {
   for (let i = 0; i < 19; i++) {
     // Splitting into files based on constituency
     let constituencyName = restOfData[0]["Constituency"];
-    let singleConstituencyCSV = restOfData.filter(row => row["Constituency"] === constituencyName);
+    let singleConstituencyData = restOfData.filter(row => row["Constituency"] === constituencyName);
     restOfData = restOfData.filter(row => row["Constituency"] !== constituencyName);
 
-    generateSingleOpaVoteCSV(rows, constituencyName, divName, uhmfsEmailRow);
+    generateSingleOpaVoteCSV(singleConstituencyData, constituencyName, divName, uhmfsEmailRow);
   }
 }
 
@@ -542,7 +539,7 @@ function generateOpaVoteCSVs(rows, divName, uhmfsEmailRow) {
  * 
  *  - Parsing a list of objects into a csv is done with Papa.unparse(...), which returns a string
  *  - The string is then turned into a JavaScript Blob object to be downloaded
- *  - A download button is created, and put into a div determined by divName
+ *  - A download link is created, and put into a list determined by divName
  */
 function createCSVDownloadButton(arrayData, filename, delimiter, keepHeader, divName) {
   const csv = 
@@ -553,13 +550,13 @@ function createCSVDownloadButton(arrayData, filename, delimiter, keepHeader, div
       }
     );
   let blob = new Blob([csv], { type: 'text/csv' });
-  let downloadButton = document.createElement("button");
-  downloadButton.onclick = function() {
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-  };
-  downloadButton.innerText = "Download " + filename;
-  document.getElementById(divName).appendChild(downloadButton);
+  
+  let link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.innerText = filename;
+
+  let listEntry = document.createElement('li');
+  listEntry.appendChild(link);
+  document.getElementById(divName).appendChild(listEntry);
 }
