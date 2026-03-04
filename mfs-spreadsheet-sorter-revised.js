@@ -2,23 +2,23 @@
 // Globals that should be loaded by processInputCSVData and processConstituencyMap
 let inputCSVData = null;
 let constituencyMap = null;
-let manualCheckedData = null;
+let dualAppointments = null;
 
 // Get initial elements from the html file
-const content = document.getElementById("text-box");
 const csvInput = document.getElementById("data-input");
 const constituencyMapInput = document.getElementById("constituency-map-input");
+const dualAppointmentsInput = document.getElementById("dual-appointments");
 const processButton = document.getElementById("process-button");
-const dualAppointments = document.getElementById("dual-appointments");
 
 // Set input/button callback functions.
-csvInput.addEventListener("change", processCSV);
-constituencyMapInput.addEventListener("change", processConstituencyMap);
+const processHRCongressCSV = createCSVLoadingFunction(onHRCongressCSVLoaded);
+const processTranslationTableCSV = createCSVLoadingFunction(onTranslationTableCSVLoaded);
+const processDualAppointmentsCSV = createCSVLoadingFunction(onDualAppointmentsCSVLoaded);
+
+csvInput.addEventListener("change", processHRCongressCSV);
+constituencyMapInput.addEventListener("change", processTranslationTableCSV);
+dualAppointmentsInput.addEventListener("change", processDualAppointmentsCSV);
 processButton.onclick = processFiles;
-
-
-// Temporary
-manualInput.addEventListener("change", processManualInput);
 
 
 function processFiles() {
@@ -33,86 +33,53 @@ function processFiles() {
 }
 
 
+function onHRCongressCSVLoaded(results) {
+  inputCSVData = results.data;
+  console.log("HR Congress File Loaded: ", inputCSVData);
+}
+
+function onTranslationTableCSVLoaded(results) {
+  constituencyMap = results.data;
+  console.log("TRanslation Table File Loaded: ", constituencyMap);
+}
+
+function onDualAppointmentsCSVLoaded(results) {
+  dualAppointments = results.data;
+  console.log("Dual Appointments File Loaded: ", dualAppointments);
+}
+
 /*
- * This function and the next two have duplicate code.
- * Can be reduced/abstracted away by only changing the
- * callback function specified in "complete:"
+ * Papa.parse is an async process. Therefore, a callback function is needed
+ * to store the results.
+ *
+ * onComplete: any function that takes the resulting parsed CSV as input.
+ *
+ * returns: a function that processes the opened CSV file, and calls
+ *          onComplete once processing is complete.
+ *
+ * proper usage:
+ *   - Assume input is some HTML element that can open a file.
+ *   - const onComplete = function(results) { myGlobalVariable = results.data; };
+ *   - input.addEventListener("change", createCSVLoadingFunction(onComplete));
  */
-function processCSV(event) {
-  console.log("processCSV called");
-  const file = event.target.files[0];
-  if (file) {
-    Papa.parse(file, {
-      // Treat first row as an object header
-      header: true,
-
-      // Auto convert numbers and booleans to JS types
-      dynamicTyping: true,
-
-      // Callback function once processing finishes
-      complete: function(results) {
-        inputCSVData = results.data;
-        console.log("File Loaded: ", inputCSVData);
-      },
-
-      // Error log in case CSV is formatted wrong
-      error: function(error) {
-        console.log("Parsing error: ", error);
-      },
-    });
+function createCSVLoadingFunction(onComplete) {
+  const loadFunc = function(event) {
+    console.log("processCSV called");
+    const file = event.target.files[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true, // Treat first row as an object header
+        dynamicTyping: true, // Auto convert numbers and booleans to JS types
+        complete: onComplete, // Callback function once processing finishes
+        error: function(error) { // Error log in case CSV is formatted wrong
+          console.log("Parsing error: ", error);
+        },
+      });
+    }
   }
+  return loadFunc;
 }
 
-
-function processConstituencyMap(event) {
-  console.log("processConstituencyMap called");
-  const file = event.target.files[0];
-  if (file) {
-    Papa.parse(file, {
-      // Treat first row as an object header
-      header: true,
-
-      // Auto convert numbers and booleans to JS types
-      dynamicTyping: true,
-
-      // Callback function once processing finishes
-      complete: function(results) {
-        constituencyMap = results.data;
-        console.log("File Loaded: ", constituencyMap);
-      },
-
-      // Error log in case CSV is formatted wrong
-      error: function(error) {
-        console.log("Parsing error: ", error);
-      },
-    });
-  }
-}
-
-function processDualAppointments(event) {
-  console.log("processManualInput called");
-  const file = event.target.files[0];
-  if (file) {
-    Papa.parse(file, {
-      // Treat first row as an object header
-      header: true,
-
-      // Auto convert numbers and booleans to JS types
-      dynamicTyping: true,
-
-      // Callback function once processing finishes
-      complete: function(results) {
-        dualAppointments = results.data;
-        console.log("File Loaded: ", manualCheckedData);
-      },
-
-      // Error log in case CSV is formatted wrong
-      error: function(error) {
-        console.log("Parsing error: ", error);
-      },
-    });
-  }
-}
 
 /*
  * The main pipeline for filtering data into CSVs
@@ -161,8 +128,7 @@ function processDualAppointments(event) {
  *
  */
 function filteringPipeline(rawData, dataMap) {
-  const filteredByFTE = filterRawDataByTotalFTE(rawData);
-  const data = convertDataToMFSData(filteredByFTE, dataMap);
+  const data = convertDataToMFSData(rawData, dataMap);
   const constituencyRawData = data[0];
   const unknownConstituency = data[1];
 
@@ -171,8 +137,28 @@ function filteringPipeline(rawData, dataMap) {
   const unknownDualConstituencies = constituencyData[1];
 
 
-  // Before proceeding: resolve unknown dual constituencies somehow.
-  // Splice the resolved data back in.
+  // Before proceeding: resolve unknown dual constituencies.
+  // We are using John's Dual Appointment CSV that he maintains.
+  // It contains multiple rows per email, but we only care about
+  // the row where Home matches Constituency.
+  // Constituency is per-row.
+  // Home is the Constituency that John determines in the case of a tie.
+  //
+  // In the future, we could check if this list covers every case in
+  // unknownDualConstituencies above.
+  let dualAppointmentsClean = [];
+  for (row of dualAppointments) {
+    console.log(row);
+    if (row["Home"] == row["Constituency"]) {
+      knownConstituencies.push(row);
+    }
+  }
+
+  console.log(knownConstituencies);
+  knownConstituencies.concat(dualAppointmentsClean);
+  console.log(knownConstituencies);
+    
+  const filteredByFTE = filterRawDataByTotalFTE(knownConstituencies);
 
 
   const uhmfsRow =
@@ -194,7 +180,7 @@ function filteringPipeline(rawData, dataMap) {
 
 
 
-  const rows = knownConstituencies;
+  const rows = filteredByFTE;
 
   generateCongressList(rows, "congress-download", uhmfsRow);
   generateListServCSVs(rows, "listserv-download", uhmfsRow);
