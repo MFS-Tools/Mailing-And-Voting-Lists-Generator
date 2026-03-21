@@ -1,0 +1,35 @@
+<head>
+</head>
+<body>
+  <script src="deps/papaparse.min.js"></script>
+  <script src="deps/jszip.min.js"></script>
+
+  <h1>Faculty Congress CSV File from Human Resources:</h1>
+  <input id="data-input" type="file"></input>
+  <h1>Translation Table Between HR Codes and MFS Constituencies:</h1>
+  <input id="constituency-map-input" type="file"></input>
+  <h1>John's Dual Appointment Faculty CSV File:</h1>
+  <input id="dual-appointments" type="file"></input>
+  <h1>Process Files:</h1>
+  <button id="process-button">Process Files</button>
+
+  <br />
+  <h1>Congress Download</h1>
+  <div>
+    <ul id="congress-download"></ul>
+  </div>
+  <h1>Senator Statistics Download</h1>
+  <div>
+    <ul id="senator-statistics-download"></ul>
+  </div>
+  <h1>ListServ Download</h1>
+  <div>
+    <ul id="listserv-download"></ul>
+  </div>
+  <h1>OpaVote Download</h1>
+  <div>
+    <ul id="opavote-download"></ul>
+  </div>
+
+  <script src="mfs-spreadsheet-sorter.js"></script>
+</body>
