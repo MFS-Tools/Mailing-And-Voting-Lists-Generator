@@ -1,19 +1,40 @@
+/**************************************************
+ * Software built for the Manoa Faculty Senate
+ * Author: Kyle Bueche
+ *
+ *
+ *
+ **************************************************/
+
+// Get important html input elements
+const csvInput = document.getElementById("data-input");
+const constituencyMapInput = document.getElementById("constituency-map-input");
+const dualAppointmentsInput = document.getElementById("dual-appointments");
+const processButton = document.getElementById("process-button");
 
 // Globals that should be loaded by processInputCSVData and processConstituencyMap
 let inputCSVData = null;
 let constituencyMap = null;
 let dualAppointments = null;
 
-// Get initial elements from the html file
-const csvInput = document.getElementById("data-input");
-const constituencyMapInput = document.getElementById("constituency-map-input");
-const dualAppointmentsInput = document.getElementById("dual-appointments");
-const processButton = document.getElementById("process-button");
+// Set callbacks to process CSV files after the user loads them.
+const processHRCongressCSV = createCSVLoadingFunction(
+  function(results) {
+    inputCSVData = results.data;
+    console.log("HR Congress File Loaded: ", inputCSVData);
+  });
 
-// Set input/button callback functions.
-const processHRCongressCSV = createCSVLoadingFunction(onHRCongressCSVLoaded);
-const processTranslationTableCSV = createCSVLoadingFunction(onTranslationTableCSVLoaded);
-const processDualAppointmentsCSV = createCSVLoadingFunction(onDualAppointmentsCSVLoaded);
+const processTranslationTableCSV = createCSVLoadingFunction(
+  function(results) {
+    constituencyMap = results.data;
+    console.log("TRanslation Table File Loaded: ", constituencyMap);
+  });
+
+const processDualAppointmentsCSV = createCSVLoadingFunction(
+  function(results) {
+    dualAppointments = results.data;
+    console.log("Dual Appointments File Loaded: ", dualAppointments);
+  });
 
 csvInput.addEventListener("change", processHRCongressCSV);
 constituencyMapInput.addEventListener("change", processTranslationTableCSV);
@@ -30,22 +51,6 @@ function processFiles() {
   }
 
   filteringPipeline(inputCSVData, constituencyMap);
-}
-
-
-function onHRCongressCSVLoaded(results) {
-  inputCSVData = results.data;
-  console.log("HR Congress File Loaded: ", inputCSVData);
-}
-
-function onTranslationTableCSVLoaded(results) {
-  constituencyMap = results.data;
-  console.log("TRanslation Table File Loaded: ", constituencyMap);
-}
-
-function onDualAppointmentsCSVLoaded(results) {
-  dualAppointments = results.data;
-  console.log("Dual Appointments File Loaded: ", dualAppointments);
 }
 
 /*

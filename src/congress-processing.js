@@ -1,93 +1,15 @@
-
-// Globals that should be loaded by processInputCSVData and processConstituencyMap
-let inputCSVData = null;
-let constituencyMap = null;
-let dualAppointments = null;
-
-// Get initial elements from the html file
-const csvInput = document.getElementById("data-input");
-const constituencyMapInput = document.getElementById("constituency-map-input");
-const dualAppointmentsInput = document.getElementById("dual-appointments");
-const processButton = document.getElementById("process-button");
-
-// Set input/button callback functions.
-const processHRCongressCSV = createCSVLoadingFunction(onHRCongressCSVLoaded);
-const processTranslationTableCSV = createCSVLoadingFunction(onTranslationTableCSVLoaded);
-const processDualAppointmentsCSV = createCSVLoadingFunction(onDualAppointmentsCSVLoaded);
-
-csvInput.addEventListener("change", processHRCongressCSV);
-constituencyMapInput.addEventListener("change", processTranslationTableCSV);
-dualAppointmentsInput.addEventListener("change", processDualAppointmentsCSV);
-processButton.onclick = processFiles;
-
-
-function processFiles() {
-  if (inputCSVData == null || constituencyMap == null) {
-    console.error("Error: Some files not loaded.");
-    console.error("inputCSV: ", inputCSVData);
-    console.error("dataConstituencyMap: ", constituencyMap);
-    return;
-  }
-
-  filteringPipeline(inputCSVData, constituencyMap);
-}
-
-
-function onHRCongressCSVLoaded(results) {
-  inputCSVData = results.data;
-  console.log("HR Congress File Loaded: ", inputCSVData);
-}
-
-function onTranslationTableCSVLoaded(results) {
-  constituencyMap = results.data;
-  console.log("TRanslation Table File Loaded: ", constituencyMap);
-}
-
-function onDualAppointmentsCSVLoaded(results) {
-  dualAppointments = results.data;
-  console.log("Dual Appointments File Loaded: ", dualAppointments);
-}
-
-/*
- * Papa.parse is an async process. Therefore, a callback function is needed
- * to store the results.
+/**************************************************
+ * Software built for the Manoa Faculty Senate
+ * Author: Kyle Bueche
  *
- * onComplete: any function that takes the resulting parsed CSV as input.
  *
- * returns: a function that processes the opened CSV file, and calls
- *          onComplete once processing is complete.
  *
- * proper usage:
- *   - Assume input is some HTML element that can open a file.
- *   - const onComplete = function(results) { myGlobalVariable = results.data; };
- *   - input.addEventListener("change", createCSVLoadingFunction(onComplete));
- */
-function createCSVLoadingFunction(onComplete) {
-  const loadFunc = function(event) {
-    console.log("processCSV called");
-    const file = event.target.files[0];
-    if (file) {
-      Papa.parse(file, {
-        header: true, // Treat first row as an object header
-        dynamicTyping: true, // Auto convert numbers and booleans to JS types
-        complete: onComplete, // Callback function once processing finishes
-        error: function(error) { // Error log in case CSV is formatted wrong
-          console.log("Parsing error: ", error);
-        },
-      });
-    }
-  }
-  return loadFunc;
-}
-
+ **************************************************/
 
 /*
  * The main pipeline for filtering data into CSVs
  * 1. filter rows by FTE, any < 0.5 get dropped.
  *
- * 2. Convert data to MFS Data, determining a constituency.
- *    - If unknownConstituency contains any entries,
- *      the DataMap csv file might be faulty.
  *
  * 3. Collapse rows so that only one row exists for
  *    each unique email. Choose a row that the faculty
@@ -120,15 +42,31 @@ function createCSVLoadingFunction(onComplete) {
  *
  */
 function filteringPipeline(rawData, dataMap) {
+  // 1. Convert data to MFS Data, determining a constituency.
   const data = convertDataToMFSData(rawData, dataMap);
   const constituencyRawData = data[0];
   const unknownConstituency = data[1];
+  // If the dataMap CSV works correctly,
+  // the unknownConstituency list should be empty.
 
+  // 2. Choose only one constituency for each person.
+  //
+  //   - Now there are people with multiple rows,
+  //     and different constituencies on each row.
+  //
+  //   - But we only want one row and one
+  //     coonstituency per person.
+  //
   const constituencyData = selectHighestFTEConstituencies(constituencyRawData);
   const knownConstituencies = constituencyData[0];
   const unknownDualConstituencies = constituencyData[1];
-
-
+  // Some faculty have 0.5 FTE in one constituency,
+  // and 0.5 FTE in another.
+  //
+  // unknownDualConstituencies contains these members.
+  // John maintains a list of these people, but it's also
+  // useful to have a list incase new members are unaccounted for.
+  //
   // Before proceeding: resolve unknown dual constituencies.
   // We are using John's Dual Appointment CSV that he maintains.
   // It contains multiple rows per email, but we only care about
@@ -138,6 +76,8 @@ function filteringPipeline(rawData, dataMap) {
   //
   // In the future, we could check if this list covers every case in
   // unknownDualConstituencies above.
+
+  // 3. Insert John's list of Dual Appointments
   let dualAppointmentsClean = [];
   for (row of dualAppointments) {
     console.log(row);
@@ -150,9 +90,11 @@ function filteringPipeline(rawData, dataMap) {
   knownConstituencies.concat(dualAppointmentsClean);
   console.log(knownConstituencies);
     
+  // 4. Remove any faculty whose total FTE is less than 0.5
   const filteredByFTE = filterRawDataByTotalFTE(knownConstituencies);
 
 
+  // 5. Include John's UHMFS email so he can check whether the emails have been sent out.
   const uhmfsRow =
     {
       "FirstName":        "John",
@@ -172,6 +114,7 @@ function filteringPipeline(rawData, dataMap) {
 
 
 
+  // 6. Generate all the output CSV lists.
   const rows = filteredByFTE;
 
   generateCongressList(rows, "congress-download", uhmfsRow);

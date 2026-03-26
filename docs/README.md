@@ -1,31 +1,58 @@
 MFS Spreadsheet Sorter
 =====
 
-| [Details of the WordPress Plugin](#details-of-the-wordpress-plugin) - [Future Development](#future-development) |
-..................:|
+### Table of Contents
+
+- [Overview](#overview)
+- [Goals](#goals)
+- [Implementation Details](#implementation-details)
+- [Expected CSV Formats](#expected-csv-formats)
+- [Dependencies](#dependencies)
+- [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
+- [Future Development](#future-development)
+
+### Overview
 
 The Manoa Faculty Senate obtains a spreadsheet of faculty data every year, which needs to be processed to generate mailing lists and determine how many senators each constituency will recieve.
 
-The spreadsheet is not expected to be consistent each year, and the code has been built around data recieved in 2026. Therefore, someone with a working knowledge of JavaScript should check the code against future spreadsheets to ensure future compatability.
+The spreadsheet is not expected to be consistent each year, and the code has been built around data recieved in 2026. Therefore, someone with a working knowledge of JavaScript should check the code against future spreadsheets to ensure compatability.
 
 ### Goals
 
 This program meets a few specific requirements and end goals which were previously done manually (and very tediously).
 
 At a high level, we want:
-1. Mailing lists (via ListServ) for each constituency, and the congress (group of all constituencies) as a whole.
+
+1. Mailing lists (in ListServ csv format) for each constituency, and the congress (group of all constituencies) as a whole.
     - Eligible faculty only.
     - John's email should be added to each individual list so he can ensure the emails go out properly.
-2. Voting lists (via OpaVote) for each constituency
+2. Voting lists (in OpaVote csv format) for each constituency
     - Eligible faculty only.
     - TODO: John's email should also be added (?) check this again. The code is correct, I just forgot.
 3. Congress spreadsheet (for MFS internal usage, to look up constituencies and faculty).
     - Eligible faculty only.
     - Preserve all the raw data, add constituency data.
-4. Total automation of all the tasks.
+4. Total automation of all the above.
 
+### Implementation Details:
 
+User Inputs:
+- Select the Raw Congress Data CSV file.
+- Select the DataMap CSV file.
+- Select the Dual Constituency Data CSV file.
+- Click a "run" button to generate output CSV files.
+- Download output CSV files.
+
+Steps in the algorithm:
+1. Collect user inputs.
+2. Process CSV files with PapaParse.
+3. Convert the data to MFS data.
+  - Map all rows to rows that include constituency designations.
+  - Use the DataMap CSV to determine constituencies from row data.
+4. 
 1. We only consider faculty members with at least 0.5 FTE. Anyone below this threshold is not eligible to vote.
+
+### Expected CSV Formats:
 
 ### Dependencies
 
