@@ -59,6 +59,7 @@
     }
 
     // Load Scripts in order.
+    (async () => {
     for (const scriptSrc of scripts) {
       try {
         await loadScript(src);
@@ -68,5 +69,6 @@
         break;
       }
     }
+    });
   }
 </script>
