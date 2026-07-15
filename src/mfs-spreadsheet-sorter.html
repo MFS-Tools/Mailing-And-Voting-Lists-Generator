@@ -1,3 +1,63 @@
+<div class="mfs-dashboard">
+  <div class="mfs-section">
+    <h2>Data Input & Processing</h2>
+    <div class="mfs-upload-grid">
+      <div class="mfs-field-group">
+        <label for="data-input">Faculty Congress CSV File from Human Resources:</label>
+        <input id="data-input" class="mfs-file-input" type="file">
+      </div>
+      <!-- TODO: Rename data-input id to congress-data-input. More descriptive. Update all references in JS -->
+      <div class="mfs-field-group">
+        <label for="data-input">Faculty Congress CSV File from Human Resources:</label>
+        <input id="data-input" class="mfs-file-input" type="file">
+      </div>
+
+      <div class="mfs-field-group">
+        <label for="constituency-map-input">Translation Table (Maps HR Codes to MFS Constituencies)</label>
+        <input id="constituency-map-input" class="mfs-file-input" type="file">
+      </div>
+
+      <!-- TODO: Maybe in JS, we could check for an exact match between dual appointments found by the program, compared to those already accounted for in the record? -->
+      <!-- ^ This could help with updating the dual appointments record -->
+      <div class="mfs-field-group">
+        <label for="dual-appointments">Existing Dual Appointment Record CSV file</label>
+        <input id="dual-appointments" class="mfs-file-input" type="file">
+      </div>
+    </div>
+
+    <div class="mfs-btn-container">
+      <button id="process-button">Process Files</button>
+    </div>
+  </div>
+
+  <div class="mfs-section" style="margin-bottom: 0;">
+    <h2>Available Downloads</h2>
+    <div class="mfs-downloads-grid">
+
+      <div class="mfs-download-card">
+        <h3>Congress Masterlist CSV</h3>
+        <ul id="congress-download"></ul>
+      </div>
+
+      <div class="mfs-download-card">
+        <h3>Senator Statistics</h3>
+        <ul id="senator-statistics-download"></ul>
+      </div>
+
+      <div class="mfs-download-card">
+        <h3>ListServ Mailing List CSVs</h3>
+        <ul id="listserv-download"></ul>
+      </div>
+
+      <div class="mfs-download-card">
+        <h3>OpaVote Voting List CSVs</h3>
+        <ul id="opavote-download"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Old Dashboard. Scheduled for deletion once the above is tested.
 <div>
   <h1>Faculty Congress CSV File from Human Resources:</h1>
   <input id="data-input" type="file"></input>
@@ -26,6 +86,7 @@
     <ul id="opavote-download"></ul>
   </div>
 </div>
+-->
 
 <!-- Only modify this code if you understand how WordPress Plugins work. -->
 <!-- See "Local Testing" and "Details of the WordPress Plugin" in the README.md -->
