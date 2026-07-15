@@ -98,19 +98,22 @@ This may not be the conventional way to do this.
 
 ### Implementation Details:
 
-We have no need for a full-blown website host (extra time, money, maintenance, passwords to remember).
-
-Instead, this program is a WordPress plugin.
-
-Therefore, this program is using JavaScript so that the 
-
-Recall that the tool should:
-1. Automate the tasks.
-2. Be easy to use.
-3. Be easy to find.
 
 
+#### HTML/CSS, JavaScript:
 
+TODO: List JavaScript files in use.
+
+PHP Layer:
+
+WordPress Integration Instructions:
+
+User Instructions:
+
+TODO: Change filenames and update this doc.
+
+PHP Code: `src/mfs-test.php`
+Purpose: Provides a shortcode
 
 User Inputs:
 - Select the Raw Congress Data CSV file.
@@ -158,6 +161,37 @@ Here are some of the challenges involved that this program overcomes:
     - We want to compare constituencies for a given faculty member, which doesn't always map cleanly to the separate rows.
 
 - Contituencies have a complex identification process.
+
+### Local Testing
+
+#### Typical Approaches:
+
+In a typical HTML/CSS & JS environment, the HTML file would contain style and script tags that import the proper CSS & JS files.
+With this setup, you would be able to run the site by pasting the file path into your browser directly.
+Simple, and straightforward.
+
+#### What WordPress Expects:
+
+WordPress Plugins allow you to paste HTML into the body of an existing site (via shortcode), but style and script tags will not run properly.
+WordPress instead uses PHP, which lets you enqueue both CSS and JS files.
+
+WordPress uses a PHP file that registers a shortcode.
+When the shortcode is found on a page in the website, it calls whatever function you define.
+The return value of this function is pasted, and replaces the shortcode.
+If the return value is HTML, it is inserted into the div where the shortcode used to be.
+
+The PHP file currently registers shortcode that does the following:
+
+1. Enqueues the CSS file
+2. Enqueues the JavaScript file
+3. Injects the HTML snippet into the website.
+
+The HTML file should not contain a Head or Body block. In local testing, the HTML5 spec can infer where these will go. Using a Head or Body can cause issues on the WP site, because only one of each is allowed.
+
+This project is designed so that you can load the HTML as a local website, while still decoupling it
+
+
+See the reasoning for this choice below:
 
 ### Details of the WordPress Plugin
 

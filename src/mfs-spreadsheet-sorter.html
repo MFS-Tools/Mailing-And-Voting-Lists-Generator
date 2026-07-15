@@ -1,9 +1,4 @@
-<head>
-</head>
-<body>
-  <script src="deps/papaparse.min.js"></script>
-  <script src="deps/jszip.min.js"></script>
-
+<div>
   <h1>Faculty Congress CSV File from Human Resources:</h1>
   <input id="data-input" type="file"></input>
   <h1>Translation Table Between HR Codes and MFS Constituencies:</h1>
@@ -30,6 +25,48 @@
   <div>
     <ul id="opavote-download"></ul>
   </div>
+</div>
 
-  <script src="mfs-spreadsheet-sorter.js"></script>
-</body>
+<!-- Only modify this code if you understand how WordPress Plugins work. -->
+<!-- See "Local Testing" and "Details of the WordPress Plugin" in the README.md -->
+<script>
+
+  // Local testing only. WP Plugin build loads JS and CSS through PHP.
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+
+    // Load CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'mfs-spreadsheet-sorter.css';
+    document.head.appendChild(link);
+
+    // Load JS
+    var scripts = [
+      'deps/papaparse.min.js',
+      'deps/jszip.min.js',
+      'mfs-spreadsheet-sorter.js'
+    ];
+
+    // Runtime-Appended Scripts load asynchronously, but we want them loaded in order.
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve(src);
+        script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+        document.body.appendChild(script);
+      });
+    }
+
+    // Load Scripts in order.
+    for (const scriptSrc of scripts) {
+      try {
+        await loadScript(src);
+        console.log(`${src} loaded successfully.`);
+      } catch (err) {
+        console.error(err);
+        break;
+      }
+    }
+  }
+</script>
