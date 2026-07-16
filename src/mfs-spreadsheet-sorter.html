@@ -2,10 +2,6 @@
   <div class="mfs-section">
     <h2>Data Input & Processing</h2>
     <div class="mfs-upload-grid">
-      <div class="mfs-field-group">
-        <label for="data-input">Faculty Congress CSV File from Human Resources:</label>
-        <input id="data-input" class="mfs-file-input" type="file">
-      </div>
       <!-- TODO: Rename data-input id to congress-data-input. More descriptive. Update all references in JS -->
       <div class="mfs-field-group">
         <label for="data-input">Faculty Congress CSV File from Human Resources:</label>
@@ -93,7 +89,9 @@
 <script>
 
   // Local testing only. WP Plugin build loads JS and CSS through PHP.
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  if ( window.location.protocol === 'file:'
+    || window.location.hostname === 'localhost'
+    || window.location.hostname === '127.0.0.1') {
 
     // Load CSS
     const link = document.createElement('link');
@@ -121,15 +119,15 @@
 
     // Load Scripts in order.
     (async () => {
-    for (const scriptSrc of scripts) {
-      try {
-        await loadScript(src);
-        console.log(`${src} loaded successfully.`);
-      } catch (err) {
-        console.error(err);
-        break;
+      for (const scriptSrc of scripts) {
+        try {
+          await loadScript(src);
+          console.log(`${src} loaded successfully.`);
+        } catch (err) {
+          console.error(err);
+          break;
+        }
       }
-    }
     });
   }
 </script>
