@@ -10,45 +10,44 @@ Shortcode: [mfs_spreadsheet_sorter]
 
 if (!defined('ABSPATH')) exit;
 
-function load_app( $atts ) {
-    load_js_from_file();
-    load_css_from_file();
-    // The shortcode is replaced with the HTML file returned here
-    return load_html_from_file();
-}
+// Register the shortcode for easy use in WordPress
+add_shortcode( 'mfs_spreadsheet-sorter', 'mfs_load_spreadsheet_plugin' );
 
-// Enqueues JavaScript file, which loads after the HTML is inserted.
-function load_js_from_file() {
+function mfs_load_spreadsheet_plugin( $atts ) {
+    // Load JavaScript, only runs after HTML loads
+    wp_enqueue_script(
+        'papa-parse',
+        plugins_url( 'deps/papaparse.min.js', __FILE__ ),
+        array(), // dependencies
+        '5.4.1', // version
+        array( 'strategy' => 'defer' ) // Only run HTML loads
+    );
     wp_enqueue_script(
         'mfs-spreadsheet-sorter-script',
         plugins_url( 'mfs-spreadsheet-sorter.js', __FILE__ ),
-        array(),
-        '1.0.0',
-        array(
-            'strategy' => 'defer', // Only run once the HTML DOM tree has fully loaded
+        array('papa-parse'), // Wait till papaparse loads to run
+        '1.0.0', // version
+        array( 'strategy' => 'defer' ) // Only run once HTML loads
             'in-footer' => false
         )
     );
-}
 
-// enqueues the CSS stylesheet.
-function load_css_from_file() {
+    // Load Stylesheet
     wp_enqueue_style(
         'mfs-spreadsheet-sorter-style',
         plugins_url( 'mfs-spreadsheet-sorter.css', __FILE__ ),
-        array(),
-        '1.0.0',
+        array(), // dependencies
+        '1.0.0', // version
         'all' // Defined for all media types (PC site, phone site, etc.)
     );
-}
 
-// Parses and returns the html file as a clean string.
-function load_html_from_file() {
+
+    // Parses and cleans the HTML file
     ob_start();
     include( 'mfs-spreadsheet-sorter.html' );
     $html_content = ob_get_clean();
+
+    // Replace the shortcode with the HTML.
     return $html_content;
 }
 
-// Register the shortcode for easy use in WordPress
-add_shortcode( 'mfs_spreadsheet-sorter', 'load_app' );

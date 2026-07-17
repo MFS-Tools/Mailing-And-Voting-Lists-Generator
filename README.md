@@ -3,9 +3,12 @@ MFS Spreadsheet Sorter
 
 A tool to automate yearly, manual, time-consuming tasks for the Manoa Faculty Senate
 
-### Table of Contents
+This tool has two main parts:
+1. Determining the Constituency of each faculty from HR's records.
+2. Generating mailing lists and voting lists for eligible faculty, separated by constituency.
 
-- [Overview](#overview)
+## Table of Contents
+
 - [Goals](#goals)
 - [Implementation Details](#implementation-details)
 - [Expected CSV Formats](#expected-csv-formats)
@@ -13,29 +16,18 @@ A tool to automate yearly, manual, time-consuming tasks for the Manoa Faculty Se
 - [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
 - [Future Development](#future-development)
 
-### Overview
 
-The MFS maintains a list of Eligible Faculty, and the Constituencies they belong to.
-This list changes every single year, and updating the information by hand takes weeks.
+## Notes for Future Developers
+
+This tool needs to be easy to use, and easy for to find on the WordPress website.
+
+
+
+, and the Constituencies they belong to.
 
 Eligible Faculty are sorted into Constituency-specific mailing and voting lists, as well as a master list.
 
-This tool should:
-- Automate the above tasks.
-- Be easy to use.
-- Be easy to find.
 
-### Terms
-
-*Constituency:* A named group that some faculty belong to.
-- Faculty may have multiple constituencies.
-- As of 2026 there are 19 constituencies.
-
-*Total FTE:* The sum of all a faculty member's Full-Time-Employment points.
-
-*Eligible Faculty:* Faculty who have Total FTE >= 0.5 (at least half-time employed).
-
-*Congress:* The collective Eligible Faculty body (all constituencies combined).
 
 ### Goals
 
@@ -61,59 +53,17 @@ TODO: Double check whether John's email should be added to the voting lists.
 
 TODO: Add note about determining how many senators each constituency will recieve.
 
-*Side goal:* Make this tool easily accessible.
+## Constrains / Reason for Development
 
-### Constraints
+HR doesn't keep record of constituencies, we have to figure them out on our own.
 
-1. Every year, the MFS 
-
-### Design Philosophy:
-
-> The tool should be easy to use.
-
-The User Interface should be designed and updated with the user in mind.
-If it's easy-to-use for a programmer, it may still be hard-to-use for a non-tech-savvy person.
-
-Design the User Interface to be easy for a non-tech-savvy person.
-This means you have to talk to them for feedback.
-
-> The tool should be easy to find.
-
-TODO: The following section is scattered. Remove unnecessary stuff and combine into paragraphs.
-
-Assume the user is non-tech-savvy.
-We don't want the user to have to install anything.
-
-The browser is the easiest way for anyone to share code, so we're using JavaScript & HTML/CSS.
-
-The MFS has a WordPress site, so this program is a custom WordPress plugin.
-
-I prefer writing HTML, CSS, and JavaScript the way a typical static website would use it.
-
-WordPress requires a PHP file to register a plugin.
-
-I have designed this plugin so that HTML, CSS, and JavaScript can be captured by a plugin.
-
-This may not be the conventional way to do this.
+Updating these lists takes weeks. Faculty constituencies shift around, and some faculty join or leave.
 
 ### Implementation Details:
 
 
 
-#### HTML/CSS, JavaScript:
-
-TODO: List JavaScript files in use.
-
-PHP Layer:
-
-WordPress Integration Instructions:
-
-User Instructions:
-
-TODO: Change filenames and update this doc.
-
-PHP Code: `src/mfs-test.php`
-Purpose: Provides a shortcode
+## User Instructions
 
 User Inputs:
 - Select the Raw Congress Data CSV file.
@@ -134,20 +84,14 @@ Steps in the algorithm:
 The spreadsheet is not expected to be consistent each year, and the code has been built around data recieved in 2026. Therefore, someone with a working knowledge of JavaScript should check the code against future spreadsheets to ensure compatability.
 
 
-### Expected CSV Formats:
-
 ### Dependencies
 
 Dependencies are managed with a simple bundled local copy.
 
 - [PapaParse](https://www.papaparse.com/), a fast CSV file parser and writer.
-  - Saves file I/O, edge-case, & optimization headaches.
-- [ZipJS](https://stuk.github.io/jszip/), used to compress several files into one downloadable zip folder.
-  - Download 20+ files with one click instead of 20+ clicks.
+  - Saves headaches on file I/O, edge-case, & optimization.
 
 Dependencies are located in `src/deps/`
-
-TODO: Use ZipJS. It is currently unused.
 
 ### Challenges
 
@@ -162,15 +106,8 @@ Here are some of the challenges involved that this program overcomes:
 
 - Contituencies have a complex identification process.
 
-### Local Testing
 
-#### Typical Approaches:
-
-In a typical HTML/CSS & JS environment, the HTML file would contain style and script tags that import the proper CSS & JS files.
-With this setup, you would be able to run the site by pasting the file path into your browser directly.
-Simple, and straightforward.
-
-#### What WordPress Expects:
+#### WordPress Overview:
 
 WordPress Plugins allow you to paste HTML into the body of an existing site (via shortcode), but style and script tags will not run properly.
 WordPress instead uses PHP, which lets you enqueue both CSS and JS files.
@@ -186,28 +123,95 @@ The PHP file currently registers shortcode that does the following:
 2. Enqueues the JavaScript file
 3. Injects the HTML snippet into the website.
 
-The HTML file should not contain a Head or Body block. In local testing, the HTML5 spec can infer where these will go. Using a Head or Body can cause issues on the WP site, because only one of each is allowed.
+The HTML file should not contain a Head or Body block.
+In local testing, the HTML5 spec can infer where these will go.
+Using a Head or Body can cause issues on the WP site, because only one of each is allowed.
 
-This project is designed so that you can load the HTML as a local website, while still decoupling it
+## Development
 
+### Installing the Project
 
-See the reasoning for this choice below:
+Use git to install this project:
 
-### Details of the WordPress Plugin
+```powershell
+git clone https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git
+```
 
-I have chosen a simple development approach to this code. Websites are made up of simple HTML, CSS, and JavaScript files. Therefore, development consists of using a simple text editor (or IDE) of your choosing, and simply opening the local html file in your browser by double clicking it. This is an extremely straightforward way to test the site locally.
+You can also paste https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git into GitHub Desktop.
 
-The typical structure of a website is an HTML file which imports JavaScript and CSS files. The HTML file lays out all the words, buttons, and other useful elements that the user needs to see. The CSS file specifies colors, sizes, and the overall appearance of each HTML element. The Javascript file looks at all the text and buttons, and executes the code that you write in it in relation to the HTML elements.
+### Testing Locally
 
-A WordPress Plugin works a little bit differently from our local site, so we have to make some changes in order to keep this simple development setup. On WordPress, the HTML is not loaded as a site, but rather injected into a part of the existing site via a shortcode ( [mfs\_spreadsheet\_sorter] ).
+You can test this plugin locally by pasting the local filepath of `src/mfs-spreadsheet-sorter.html` directly into your browser.
 
-For testing WordPress plugins, I highly recommend installing LocalWP, which simulates a local WordPress site on your computer. I've written a few broken plugins which caused the local site to crash, and I was very happy that I decided to test and fix them before uploading to the MFS WordPress site.
+The HTML file contains a script that loads the CSS and JavaScript files, only when a local host is detected.
+The plugin will load as it's own website, and you just have to refresh the page when you edit the code.
 
-Still, I have not found a fast way to test small changes to plugins in LocalWP, so I recommend iterating with a simple text editor and browser to get it working, followed by thorough testing in LocalWP.
+### Building
 
+Once the plugin works, you can build it using the `build.bat` script on Windows, or the `build.sh` script on Linux.
 
-### Future Development:
-- A future version of this code could possibly let the user choose what columns correspond to what, but it's easy to over-engineer this when it might not be necessary.
+The built plugin will be a .zip file located in the `build/` folder.
 
+### Testing the Built Plugin
 
-needs to sort faculty emails by constituency.
+For testing WordPress plugins, you will need LocalWP installed.
+Faulty plugins can crash WordPress, so please test them locally.
+
+TODO: Add instructions for installing a WordPress plugin to both LocalWP and the school WP site.
+
+## Details of the WordPress Plugin
+
+WordPress plugins must be a zipped folder with a PHP file specifying the plugin details.
+
+The current PHP file does the following tasks:
+- Injects HTML into the `mfs-spreadsheet-sorter` shortcode.
+- Enqueus custom CSS and JavaScript to run on the WordPress frontend
+
+In WordPress, you cannot use the usual HTML syntax for CSS or JavaScript:
+
+```HTML
+<head>
+    <link rel="stylesheet" href="my-style.css">
+    <script src="my-script.js">
+</head>
+```
+
+Reasons this isn't allowed:
+- This WordPress plugin just pastes HTML into an existing site. The site already has a head block.
+- The pasted HTML cannot see other files bundled in the plugin. CSS and JS have to be loaded with PHP.
+
+Instead, a WordPress PHP plugin adds the JavaScript and CSS files by *enqueuing* them:
+
+```PHP
+wp_enqueue_script(
+    'my-script-name',
+    plugins_url( 'my-script.js' __FILE__ ),
+    array(), // dependencies list
+    '1.0.0', // version
+    array( // extra settings
+        'strategy' => 'defer' // Wait till all HTML has loaded to run this script
+        'in-footer' => false
+    )
+);
+
+wp_enqueue_style(
+    'my-style-name'
+    plugins_url( 'my-style.css', __FILE__ ),
+    array() // dependencies list
+    '1.0.0' // version
+    'all' // media types (PC, phone, etc)
+);
+```
+
+Future development shouldn't need to modify the existing PHP file.
+
+If in doubt, refer to the WordPress PHP API docs.
+
+### Definitions
+
+- **Constituency:** A named group that some faculty belong to.
+    - Faculty may have multiple constituencies.
+    - As of 2026 there are 19 constituencies.
+- **Total FTE:** The sum of all a faculty member's Full-Time-Employment points.
+- **Eligible Faculty:** Faculty who have Total FTE >= 0.5 (at least half-time employed).
+- **Congress:** The collective Eligible Faculty body (all constituencies combined).
