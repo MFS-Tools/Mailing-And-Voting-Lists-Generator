@@ -16,18 +16,26 @@ This tool has two main parts:
 - [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
 - [Future Development](#future-development)
 
+## Algorithm Design
 
-## Notes for Future Developers
+### Data Inputs
 
-This tool needs to be easy to use, and easy for to find on the WordPress website.
+The input data has strange formatting. In 2026, the HR data looks like:
 
+| Name | Email | Department | Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
+| ---- | ----- | ---------- | ----- | --------------- | --------------- | --------------- | ---------- | ----------- | --- | ------- |
+| Doe, John M | johndoe@hawaii.edu | DEPARTMENT OF PHILOSOPHY | C OF ARTS, LANGUAGES & LETTERS | DEPARTMENT OF PHILOSOPHY | | FNT | FACULTY-NOT ELIG FOR TENURE | 1.000000 | 1 |
+| Doe, Jane H | janedoe@hawaii.edu | CHEMISTRY DEPT | C OF NAT SCI | CHEMISTRY DEPT | CHEMISTRY DEPT | FTN | FACULTY-TENURED | 1.000000 | 1 |
 
+Because of the irregular nature of the columns and their complex mapping to MFS Constituencies, the MFS came up with this mapping in 2026:
 
-, and the Constituencies they belong to.
+TODO: Add mapping.
 
-Eligible Faculty are sorted into Constituency-specific mailing and voting lists, as well as a master list.
+### Determining Constituencies
 
+Constituency-mapping is complicated, so a lookup table has been designed to automate the process.
 
+For each row, the code checks multiple relevant columns, and determines a constituency for each person.
 
 ### Goals
 
