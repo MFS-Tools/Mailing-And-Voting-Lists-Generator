@@ -40,21 +40,20 @@ As of 2026, the HR Congress CSV looks like this:
 
 | Name | Email | Department Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
 | ---- | ----- | ---------------- | --------------- | --------------- | --------------- | ---------- | ----------- | --- | ------- |
-| Doe, John M | johndoe@hawaii.edu | DEPARTMENT OF PHILOSOPHY | C OF ARTS, LANGUAGES & LETTERS | DEPARTMENT OF PHILOSOPHY | | FNT | FACULTY-NOT ELIG FOR TENURE | 1.000000 | 1 |
-| Doe, Jane H | janedoe@hawaii.edu | CHEMISTRY DEPT | C OF NAT SCI | CHEMISTRY DEPT | CHEMISTRY DEPT | | FTN | FACULTY-TENURED | 1.000000 | 1 |
-| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.490000 | 1 |
-| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.010000 | 1 |
-| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.500000 | 1 | 
+| Doe, John M | jdoe@hawaii.edu | DEPARTMENT OF PHILOSOPHY | C OF ARTS, LANGUAGES & LETTERS | DEPARTMENT OF PHILOSOPHY | | FNT | FACULTY-NOT ELIG FOR TENURE | 1.000000 | 1 |
+| Schmoe, Joe M. | jschmoe@hawaii.edu | GEOGRAPHY AND ENVIRONMENT | C OF SOC SCI | GEOGRAPHY AND ENV DEPT | | FPR | FACULTY-TENURED | 0.500000 | 1 |
+| Schmoe, Joe M. | jschmoe@hawaii.edu | HYDROLOGICAL SCIENCES DIVISION | RES & DEAN OF GRAD DIV | WATR R R CTR | WATR R R CTR | FPR | FACULTY-TENURED | 0.500000 | 1 |
 
 Only two columns are used as a key to determine constituency:
 - UH Deptid Divis
 - UH Deptid Branc
 
 > [!NOTE]
-> Developers/Maintainers: If the HR data format changes, work with the MFS to modify the Data Mapping CSV below.
+> If the HR data format changes, only the Data Mapping below needs to be updated.
 
 #### Data Mapping CSV
 
+The Data Mapping CSV uses ["UH Deptid Divis", "UH Deptid Branc"] as a key.
 The Data Mapping CSV finds the appropriate constituency for a row from the "UH Deptid Divis" column and optionally the "UH Deptid Branc" column.
 
 If the "UH Deptid Branc" doesn't matter for a Constituency, it should be left blank for that Constituency in the Data Mapping
@@ -63,11 +62,9 @@ As of 2026, the Data Mapping CSV looks like this:
 
 | UH Deptid Divis | UH Deptid Branc | MFS_codes | MFS_long_codes |
 | --------------- | --------------- | --------- | -------------- |
-| C OF ARTS, LANGUAGES & LETTERS | | CALL | College of Arts, Languages and Letters |
 | C OF BUS ADM | | SCB | Shidler College of Business |
 | C OF HLTH SCI & SW | SCH PUB HLTH | TSSWPH | Thompson School of Social Work & Public Health |
 | C OF HLTH SCI & SW | SCH SOC WORK | TSSWPH | Thompson School of Social Work & Public Health |
-| ... | ... | ... | ... |
 
 If Branc is left blank in the Data Mapping CSV, it means that Branc is allowed to be anything in the HR Congress CSV.
 
