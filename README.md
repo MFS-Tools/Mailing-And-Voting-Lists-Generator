@@ -4,7 +4,7 @@ MFS Spreadsheet Sorter
 A tool to automate yearly, manual, time-consuming tasks for the Manoa Faculty Senate
 
 This tool has two main parts:
-1. Determining the Constituency of each faculty from HR's records.
+1. Determining the constituency of each faculty from HR's records.
 2. Generating mailing lists and voting lists for eligible faculty, separated by constituency.
 
 ## Table of Contents
@@ -16,20 +16,81 @@ This tool has two main parts:
 - [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
 - [Future Development](#future-development)
 
-## Algorithm Design
+#
+
+#### Algorithm Design Sevis UH Deptid Branc MFS_codes   MFS_long_codes  
+C OF ARTS, LANGUAGES & LETTERS      CALL    College of Arts, Languages and Letters  
+C OF BUS ADM        SCB Shidler College of Business 
+SCH OF TIM      SCB Shidler College of Business c
+
+- [Determining Constituency](#determining-constituency)
 
 ### Data Inputs
 
-The input data has strange formatting. In 2026, the HR data looks like:
+There are 3 data inputs that this application expects:
+1. HR Congress CSV (Procured by HR yearly)
+2. Data Mapping CSV (Maintained by MFS)
+3. Dual Faculty CSV (Maintained by John/MFS)
 
-| Name | Email | Department | Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
-| ---- | ----- | ---------- | ----- | --------------- | --------------- | --------------- | ---------- | ----------- | --- | ------- |
+#### HR Congress CSV
+
+The HR Congress CSV lists all faculty. They need to be separated by constituency in code.
+
+As of 2026, the HR Congress CSV looks like this:
+
+| Name | Email | Department Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
+| ---- | ----- | ---------------- | --------------- | --------------- | --------------- | ---------- | ----------- | --- | ------- |
 | Doe, John M | johndoe@hawaii.edu | DEPARTMENT OF PHILOSOPHY | C OF ARTS, LANGUAGES & LETTERS | DEPARTMENT OF PHILOSOPHY | | FNT | FACULTY-NOT ELIG FOR TENURE | 1.000000 | 1 |
-| Doe, Jane H | janedoe@hawaii.edu | CHEMISTRY DEPT | C OF NAT SCI | CHEMISTRY DEPT | CHEMISTRY DEPT | FTN | FACULTY-TENURED | 1.000000 | 1 |
+| Doe, Jane H | janedoe@hawaii.edu | CHEMISTRY DEPT | C OF NAT SCI | CHEMISTRY DEPT | CHEMISTRY DEPT | | FTN | FACULTY-TENURED | 1.000000 | 1 |
+| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.490000 | 1 |
+| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.010000 | 1 |
+| Smith, John A. | smith@hawaii.edu | DEPARTMENT OF PSYCHIATRY | C OF HLTH SCI & SW | SCH OF MED | PSYCHIATRY DEPT | FNT | FACULTY-NOT ELIG FOR TENURE | 0.500000 | 1 | 
 
-Because of the irregular nature of the columns and their complex mapping to MFS Constituencies, the MFS came up with this mapping in 2026:
+Only two columns are used as a key to determine constituency:
+- UH Deptid Divis
+- UH Deptid Branc
 
-TODO: Add mapping.
+> [!NOTE]
+> Developers/Maintainers: If the HR data format changes, work with the MFS to modify the Data Mapping CSV below.
+
+#### Data Mapping CSV
+
+The Data Mapping CSV finds the appropriate constituency for a row from the "UH Deptid Divis" column and optionally the "UH Deptid Branc" column.
+
+If the "UH Deptid Branc" doesn't matter for a Constituency, it should be left blank for that Constituency in the Data Mapping
+
+As of 2026, the Data Mapping CSV looks like this:
+
+| UH Deptid Divis | UH Deptid Branc | MFS_codes | MFS_long_codes |
+| --------------- | --------------- | --------- | -------------- |
+| C OF ARTS, LANGUAGES & LETTERS | | CALL | College of Arts, Languages and Letters |
+| C OF BUS ADM | | SCB | Shidler College of Business |
+| C OF HLTH SCI & SW | SCH PUB HLTH | TSSWPH | Thompson School of Social Work & Public Health |
+| C OF HLTH SCI & SW | SCH SOC WORK | TSSWPH | Thompson School of Social Work & Public Health |
+| ... | ... | ... | ... |
+
+If Branc is left blank in the Data Mapping CSV, it means that Branc is allowed to be anything in the HR Congress CSV.
+
+This Data Mapping is used to look up each row's constituency.
+
+Sometimes a constituency only cares about "UH Deptid Divis". In that case, "UH Deptid Branc" must be left blank in the mapping, and the code accounts for it.
+
+John also maintains this list of 
+
+
+
+One person can have several rows, which might all map to one or several constituencies. Here's an example edge case:
+
+| Name | Descr | Divis | Branc | Secti | FTE | Constituency |
+| ---- | ----- | ----- | ----- | ----- | --- | ------------ |
+| abcd | phil  | arts  | phil  |       | 0.2 | A |
+| abcd | phil  | arts  | phil  |       | 0.2 | A |
+| abcd | phil  | arts  | phil  |       | 0.2 | A |
+| abcd | chem  | natsci  | chem  | chem | 0.4 | B |
+
+If you just compared FTE of each column, you might erroneously conclude that the person belongs in Constituency B. Since 3 columns map to the same constituency, all their FTE has to be added into one bucket before comparing Constituencies A and B.
+
+
 
 ### Determining Constituencies
 
