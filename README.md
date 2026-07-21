@@ -16,27 +16,34 @@ This tool has two main parts:
 - [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
 - [Future Development](#future-development)
 
-#
+- [User Guide](#user-guide)
+  - [Input CSVs](#input-csvs)
+  - [Output CSVs](#output-csvs)
+- [Programming](#programming)
+- [Building](#building)
+- [Deploying](#deploying)
 
-#### Algorithm Design Sevis UH Deptid Branc MFS_codes   MFS_long_codes  
-C OF ARTS, LANGUAGES & LETTERS      CALL    College of Arts, Languages and Letters  
-C OF BUS ADM        SCB Shidler College of Business 
-SCH OF TIM      SCB Shidler College of Business c
+## User Guide
 
-- [Determining Constituency](#determining-constituency)
+1. Access the website at (TODO: Add permalink)
+2. Select the Congress Data CSV file from HR.
+3. Select the DataMap CSV file.
+4. Select the Dual Constituency Data CSV file.
+5. Click "Process Files."
+6. Download the output CSV files.
 
-### Data Inputs
+See below for details on Input files & Output files:
+
+### Input CSVs
 
 There are 3 data inputs that this application expects:
-1. HR Congress CSV (Procured by HR yearly)
+1. Faculty Congress CSV (Procured by HR yearly)
 2. Data Mapping CSV (Maintained by MFS)
 3. Dual Faculty CSV (Maintained by John/MFS)
 
-#### HR Congress CSV
+#### Faculty Congress CSV from HR
 
-The HR Congress CSV lists all faculty. They need to be separated by constituency in code.
-
-As of 2026, the HR Congress CSV looks like this:
+2026 Example:
 
 | Name | Email | Department Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
 | ---- | ----- | ---------------- | --------------- | --------------- | --------------- | ---------- | ----------- | --- | ------- |
@@ -44,99 +51,73 @@ As of 2026, the HR Congress CSV looks like this:
 | Schmoe, Joe M. | jschmoe@hawaii.edu | GEOGRAPHY AND ENVIRONMENT | C OF SOC SCI | GEOGRAPHY AND ENV DEPT | | FPR | FACULTY-TENURED | 0.500000 | 1 |
 | Schmoe, Joe M. | jschmoe@hawaii.edu | HYDROLOGICAL SCIENCES DIVISION | RES & DEAN OF GRAD DIV | WATR R R CTR | WATR R R CTR | FPR | FACULTY-TENURED | 0.500000 | 1 |
 
-Only two columns are used as a key to determine constituency:
-- UH Deptid Divis
-- UH Deptid Branc
-
-> [!NOTE]
-> If the HR data format changes, only the Data Mapping below needs to be updated.
-
 #### Data Mapping CSV
 
-The Data Mapping CSV uses ["UH Deptid Divis", "UH Deptid Branc"] as a key.
-The Data Mapping CSV finds the appropriate constituency for a row from the "UH Deptid Divis" column and optionally the "UH Deptid Branc" column.
+The Data Mapping CSV uses the dual key ["UH Deptid Divis", "UH Deptid Branc"] to find the correct constituency.
 
-If the "UH Deptid Branc" doesn't matter for a Constituency, it should be left blank for that Constituency in the Data Mapping
+When "UH Deptid Branc" is blank, it uses the Single key ["UH Deptid Divis"] to find the correct constituency.
 
-As of 2026, the Data Mapping CSV looks like this:
+2026 Example:
 
 | UH Deptid Divis | UH Deptid Branc | MFS_codes | MFS_long_codes |
 | --------------- | --------------- | --------- | -------------- |
-| C OF BUS ADM | | SCB | Shidler College of Business |
+| C OF EDUC | | ED | College of Education |
+| C OF HLTH SCI & SW | SCH OF NURSG | SONDH | School of Nursing and Dental Hygiene |
 | C OF HLTH SCI & SW | SCH PUB HLTH | TSSWPH | Thompson School of Social Work & Public Health |
 | C OF HLTH SCI & SW | SCH SOC WORK | TSSWPH | Thompson School of Social Work & Public Health |
 
-If Branc is left blank in the Data Mapping CSV, it means that Branc is allowed to be anything in the HR Congress CSV.
+Constituencies are labeled under "MFS_codes."
 
-This Data Mapping is used to look up each row's constituency.
+#### Dual Faculty CSV
 
-Sometimes a constituency only cares about "UH Deptid Divis". In that case, "UH Deptid Branc" must be left blank in the mapping, and the code accounts for it.
+Some faculty have multiple constituencies, but the code chooses the one with the highest FTE.
 
-John also maintains this list of 
+There are a small number of ties that John manually resolves via this CSV file.
 
+2026 Example:
 
+| Name | Email | Home | Constituency | Department Descr | UH Deptid Divis | UH Deptid Branc | UH Deptid Secti | TenureStat | Tenure Desc | FTE | TOT_FTE |
+| Doe, John M | jdoe@hawaii.edu | CALL | SOCSCI | ANTHROPOLOGY | C OF SOC SCI | ANTHROPOLOGY DEPT | FTN | FACULTY-TENURED | 0.500000 | 1 |
+| Doe, John M | jdoe@hawaii.edu | CALL | CALL | CTR SE ASIAN STU | C OF ARTS, LANGUAGES & LETTERS | CTR SE ASIAN STU | FTN | FACULTY-TENURED | 0.500000 | 1 |
+| Schmoe, Joe M | jschmoe@hawaii.edu | ED | CALL | CENTER FOR PHILIPPINE STUDIES | C OF ARTS, LANGUAGES & LETTERS | CENTER FOR PHILIPPINE STUDIES | FTN | FACULTY-TENURED | 0.500000 | 1 |
+| Schmoe, Joe M | jschmoe@hawaii.edu | ED | ED | CURRICULUM STUDIES | C OF EDUC | CURRICULUM STUDIES | FTN | FACULTY-TENURED | 0.500000 | 1 |
 
-One person can have several rows, which might all map to one or several constituencies. Here's an example edge case:
+Resolved constituencies are labeled under the "Home" column.
 
-| Name | Descr | Divis | Branc | Secti | FTE | Constituency |
-| ---- | ----- | ----- | ----- | ----- | --- | ------------ |
-| abcd | phil  | arts  | phil  |       | 0.2 | A |
-| abcd | phil  | arts  | phil  |       | 0.2 | A |
-| abcd | phil  | arts  | phil  |       | 0.2 | A |
-| abcd | chem  | natsci  | chem  | chem | 0.4 | B |
+### Output CSVs
 
-If you just compared FTE of each column, you might erroneously conclude that the person belongs in Constituency B. Since 3 columns map to the same constituency, all their FTE has to be added into one bucket before comparing Constituencies A and B.
+After clicking "Process Files," the code generates:
+1. Mailing Lists in ListServ CSV format. One for each constituency, and one for congress as a whole.
+2. Voting Lists in OpaVote CSV format. One for each constituency, and one for congress as a whole.
+3. A Congress masterlist for MFS records. This is basically the HR data with a Constituency column added.
+4. Statistics that say how many senator seats should be allocated to each Constituency.
 
-
-
-### Determining Constituencies
-
-Constituency-mapping is complicated, so a lookup table has been designed to automate the process.
-
-For each row, the code checks multiple relevant columns, and determines a constituency for each person.
+## Programming
 
 ### Goals
 
-*Main goal:* Automate some tedious tasks.
-
 The program needs to generate the following:
 
-1. Mailing Lists
-  - ListServ csv format.
-  - Congress has a mailing list.
-  - Each constituency has its own mailing list.
-2. Voting Lists
-  - OpaVote csv format.
-
-TODO: Add bullet points
-
-3. Congress Info
-  - An internal record for the MFS to hold on to.
-
-Note: John's email should be added to the mailing lists so he can verify that his emails are being sent out.
+1. ListServ Mailing Lists
+  - ListServ has a specific CSV format.
+  - One for Congress, and one for each Constituency.
+  - John's email must be appended each list.
+2. OpaVote Voting Lists
+  - OpaVote has a specific CSV format.
+  - One for Congress, and one for each Constituency.
+3. A Congress Masterlist for MFS Records
+  - Same as HR data, but with the Constituencies column added.
+4. Useful Statistics
+  - Calculates the # of senators for a Constituency based on the total number of faculty in that Constituency.
 
 TODO: Double check whether John's email should be added to the voting lists.
 
-TODO: Add note about determining how many senators each constituency will recieve.
+In order to achieve the above, we have to know what Constituency each faculty member belongs to.
+HR doesn't keep record of these, so we have to map their codes to our Constituency codes.
 
-## Constrains / Reason for Development
+See [Data Inputs](#data-inputs) above for exampels of users' input data.
 
-HR doesn't keep record of constituencies, we have to figure them out on our own.
-
-Updating these lists takes weeks. Faculty constituencies shift around, and some faculty join or leave.
-
-### Implementation Details:
-
-
-
-## User Instructions
-
-User Inputs:
-- Select the Raw Congress Data CSV file.
-- Select the DataMap CSV file.
-- Select the Dual Constituency Data CSV file.
-- Click a "run" button to generate output CSV files.
-- Download output CSV files.
+### Algorithm Overview
 
 Steps in the algorithm:
 1. Collect user inputs.
