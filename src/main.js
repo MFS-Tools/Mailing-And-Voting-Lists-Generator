@@ -1,52 +1,40 @@
-/**************************************************
- * Software built for the Manoa Faculty Senate
- * Author: Kyle Bueche
- *
- *
- *
- **************************************************/
+// Software built for the Manoa Faculty Senate
+// Author: Kyle Bueche
 
-// Get important html input elements
+// CSV files that have yet to be loaded
+let inputCSVData = null;
+let constituencyMap = null;
+let dualAppointments = null;
+
+// Retrieve HTML elements
 const csvInput = document.getElementById("data-input");
 const constituencyMapInput = document.getElementById("constituency-map-input");
 const dualAppointmentsInput = document.getElementById("dual-appointments");
 const processButton = document.getElementById("process-button");
 
-// Globals that should be loaded by processInputCSVData and processConstituencyMap
-let inputCSVData = null;
-let constituencyMap = null;
-let dualAppointments = null;
+// Set HTML element properties
+csvInput.addEventListener("change", loadCSV(results => {
+  inputCSVData = results.data;
+}));
 
-// Set callbacks to process CSV files after the user loads them.
-const processHRCongressCSV = createCSVLoadingFunction(
-  function(results) {
-    inputCSVData = results.data;
-    console.log("HR Congress File Loaded: ", inputCSVData);
-  });
+constituencyMapInput.addEventListener("change", loadCSV(results => {
+  constituencyMap = results.data;
+}));
 
-const processTranslationTableCSV = createCSVLoadingFunction(
-  function(results) {
-    constituencyMap = results.data;
-    console.log("TRanslation Table File Loaded: ", constituencyMap);
-  });
+dualAppointmentsInput.addEventListener("change", loadCSV(results => {
+  dualAppointments = results.data;
+}));
 
-const processDualAppointmentsCSV = createCSVLoadingFunction(
-  function(results) {
-    dualAppointments = results.data;
-    console.log("Dual Appointments File Loaded: ", dualAppointments);
-  });
-
-csvInput.addEventListener("change", processHRCongressCSV);
-constituencyMapInput.addEventListener("change", processTranslationTableCSV);
-dualAppointmentsInput.addEventListener("change", processDualAppointmentsCSV);
 processButton.onclick = processFiles;
 
-
 function processFiles() {
-  if (inputCSVData == null || constituencyMap == null) {
+  if (inputCSVData == null
+      || constituencyMap == null
+      || dualAppointments == null) {
     console.error("Error: Some files not loaded.");
     console.error("inputCSV: ", inputCSVData);
     console.error("dataConstituencyMap: ", constituencyMap);
+    console.error("dualAppointments: ", dualAppointments);
     return;
   }
 
@@ -67,17 +55,20 @@ function processFiles() {
  *   - const onComplete = function(results) { myGlobalVariable = results.data; };
  *   - input.addEventListener("change", createCSVLoadingFunction(onComplete));
  */
-function createCSVLoadingFunction(onComplete) {
+function loadCSV(onComplete) {
   const loadFunc = function(event) {
-    console.log("processCSV called");
+    console.log("loadCSV called");
     const file = event.target.files[0];
     if (file) {
       Papa.parse(file, {
         header: true, // Treat first row as an object header
         dynamicTyping: true, // Auto convert numbers and booleans to JS types
-        complete: onComplete, // Callback function once processing finishes
+        complete: function() { // Callback function once processing finishes
+          onComplete();
+          console.log("File loaded: ", event.target.files[0].name);
+        },
         error: function(error) { // Error log in case CSV is formatted wrong
-          console.log("Parsing error: ", error);
+          console.error("Parsing error: ", error);
         },
       });
     }
