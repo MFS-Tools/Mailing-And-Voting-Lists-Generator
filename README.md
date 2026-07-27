@@ -5,8 +5,6 @@ A tool that generates ListServ & OpaVote lists for UHM faculty constituencies & 
 
 ## Table of Contents
 
-- [Details of the WordPress Plugin](#details-of-the-wordpress-plugin)
-
 - [User Guide](#user-guide)
 - [Programmer's Guide](#programmers-guide)
 - [Building the WordPress Plugin](#building-the-wordpress-plugin)
@@ -21,13 +19,15 @@ A tool that generates ListServ & OpaVote lists for UHM faculty constituencies & 
 
 See below for details on Input files & Output files.
 
+<hr>
+
 ### Faculty Congress CSV
 
 The Faculty Congress CSV is procured by HR yearly.
 
-- One faculty may have multiple row entries.
+- Faculty may have multiple row entries.
 - Multiple rows indicate that a faculty is a part of multiple divisions.
-- The MFS separates faculty into constituencies internally, so we need to determine them from this data.
+- Different divisions might or might not indicate different constituencies.
 
 Here's a 2026 example:
 
@@ -42,11 +42,10 @@ Here's a 2026 example:
 ### Data Mapping CSV
 
 The Data Mapping CSV is maintained by the MFS.
-If the above format changes, this file makes it easy to remap everything correctly without changing the code.
 
-- The current HR format requires the dual key ["UH Deptid Divis", "UH Deptid Branc"] to find the correct constituency.
-- When "UH Deptid Branc" is blank, it uses the Single key ["UH Deptid Divis"] to find the correct constituency.
-- MFS Constituencies are labeled under "MFS_codes," and are fully described under "MFS_long_codes."
+- Sometimes constituencies change, or their departments change. This file makes it easy to modify without changing the code.
+- The code looks for the dual key ["UH Deptid Divis", "UH Deptid Branc"] to find the correct constituency.
+- The code just uses "UH Deptic Divis" if "UH Deptid Branc" is blank in the map.
 
 Here's a 2026 Example:
 
@@ -96,17 +95,28 @@ Each file is downloadable via clicking.
 Programmers and maintainers should read the following before modifying the source code.
 
 
+Use git to install this project:
+
+```powershell
+git clone https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git
+```
+
+You can also paste https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git into GitHub Desktop.
+
+
+
+<hr>
 
 ### Project Goals & Considerations
 
 The program needs to generate the following:
 
 - ListServ Mailing Lists
-  - ListServ has a specific CSV format.
+  - ListServ needs a specific CSV format ("Email FirstName LastName", space-delimited).
   - One for Congress, and one for each Constituency.
   - John's email must be appended each list.
 - OpaVote Voting Lists
-  - OpaVote has a specific CSV format.
+  - OpaVote needs a specific CSV format (Just one email column).
   - One for Congress, and one for each Constituency.
 - A Congress Masterlist for MFS Records
   - Same as HR data, but with the Constituencies column added.
@@ -116,7 +126,7 @@ The program needs to generate the following:
 This program should double check that all faculty are >= 0.5 Total FTE.
 Any faculty member that doesn't meet this requirement should be discarded from the list before any other step as they are ineligible to vote.
 
-TODO: Double check whether John's email should be added to the voting lists.
+<hr>
 
 ### Algorithm Overview
 
@@ -128,11 +138,13 @@ Steps in the algorithm:
 4. Determine the constituency associated with each row.
    - This step consults the [Data Mapping CSV](#data-mapping-csv)
 5. Count up the total FTE per-constituency per-person.
+   - Collapse rows so only one row exists per unique email
+   - Assign the highest FTE constituency, resolve ties with the [Dual Faculty CSV](#dual-faculty-csv).
    - This has some pretty complex edge cases.
-6. Assign one constituency to each person, based on the highest FTE count.
-7. Resolve ties (For example, 0.5 FTE for two different constituencies).
-   - This step consults the [Dual Faculty CSV](#dual-faculty-csv)
-8. 
+6. Generate ListServ & OpaVote lists
+   - Add a hard-coded UHMFS email entry.
+7. Generate Congress list & Senator Statistics
+8. Create download buttons for all generated lists.
 
 ### Dependencies
 
@@ -141,28 +153,27 @@ PapaParse saves lots of headaches on file I/O, edge-case, & optimization for CSV
 
 Dependencies are located in `src/deps/`
 
-## Development
-
-### Cloning the Project
-
-Use git to install this project:
-
-```powershell
-git clone https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git
-```
-
-You can also paste https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git into GitHub Desktop.
+<hr>
 
 ### Testing Locally
 
 You can test this plugin locally by pasting the local filepath of `src/mfs-spreadsheet-sorter.html` directly into your browser.
 
+The script at the end of the HTML file runs on local devices only.
+It loads the CSS/JavaScript that WordPress would normally load through PHP.
+
 The HTML file contains a script that loads the CSS and JavaScript files, only when a local host is detected.
 The plugin will load as it's own website, and you just have to refresh the page when you edit the code.
 
+<hr>
+
+## Building the WordPress Plugin
+
+WordPress
+
 ### Building
 
-Once the plugin works, you can build it using the `build.bat` script on Windows, or the `build.sh` script on Linux.
+Once the plugin works, you can build by running the `build.bat` script on Windows, or the `build.sh` script on Mac/Linux.
 
 The built plugin will be a .zip file located in the `build/` folder.
 
@@ -268,3 +279,27 @@ The PHP file currently registers shortcode that does the following:
 The HTML file should not contain a Head or Body block.
 In local testing, the HTML5 spec can infer where these will go.
 Using a Head or Body can cause issues on the WP site, because only one of each is allowed.
+
+## Known Issues:
+
+When the Dual Appointments CSV does not cover all detected dual appointments, the program fails silently.
+- Desired behavior: The user is alerted that some faculty are not accounted for. The user is instructed to fix the issue.
+- Actual behavior: The program removes detected dual appointments from the congress list, and adds CSV-provided dual appointments to the congress list.
+
+Pressing the "Process Files" button over and over adds more and more duplicate files to the download section.
+- Desired behavior: Every time "Process Files" is run, the downloads section should be cleared of any previous files
+- Actual behavior: Duplicate files stack up, and they are identically-named so they can't be distinguished.
+
+Build Script on Mac or Linux is untested
+- Windows build.bat script is tested and working.
+- Mac/Linux build.sh script is untested and unverified.
+- Desired behavior for both scripts:
+  - Deletes old files in `build/`
+  - Zips the entire `src/` directory into `build/mfs-spreadsheet-sorter.zip`
+  - Prints the location of the plugin to the console
+  - Waits for the user to press a key to exit (so they can see the messages).
+
+The 2026 Congress HR Header format is baked into the code.
+- As long as HR's format stays consistent, this is not a problem.
+- Column names are referenced with exact strings in code.
+- Fixing this would require over-engineering and a lot more code complexity.

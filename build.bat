@@ -13,11 +13,16 @@ echo:
 echo Cleaning old build files...
 if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
 mkdir "%BUILD_DIR%"
+echo:
 
 echo Zipping %SRC_DIR%...
 powershell -Command "Compress-Archive -Path '%SRC_DIR%' -DestinationPath '%BUILD_DIR%\%PLUGIN_NAME%.zip' -Force"
+echo:
 
-echo Finished!
+echo Success!
 echo:
 echo Plugin located at %BUILD_DIR%/%PLUGIN_NAME%.zip
+echo:
+
+pause
 echo:

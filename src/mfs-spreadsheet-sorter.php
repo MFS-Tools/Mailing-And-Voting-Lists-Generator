@@ -10,8 +10,6 @@ Shortcode: [mfs_spreadsheet_sorter]
 
 if (!defined('ABSPATH')) exit;
 
-// Register the shortcode for easy use in WordPress
-add_shortcode( 'mfs_spreadsheet-sorter', 'mfs_load_spreadsheet_plugin' );
 
 function mfs_load_spreadsheet_plugin( $atts ) {
     // Load JavaScript, only runs after HTML loads
@@ -28,8 +26,6 @@ function mfs_load_spreadsheet_plugin( $atts ) {
         array('papa-parse'), // Wait till papaparse loads to run
         '1.0.0', // version
         array( 'strategy' => 'defer' ) // Only run once HTML loads
-            'in-footer' => false
-        )
     );
 
     // Load Stylesheet
@@ -51,3 +47,5 @@ function mfs_load_spreadsheet_plugin( $atts ) {
     return $html_content;
 }
 
+// Register the shortcode for easy use in WordPress
+add_shortcode( 'mfs_spreadsheet_sorter', 'mfs_load_spreadsheet_plugin' );
