@@ -308,3 +308,7 @@ The 2026 Congress HR Header format is baked into the code.
 Files must be downloaded one by one.
 - A little tedious, but zipping them in code is a bit complicated.
 - JSZip might be able to help with this
+
+There are no error messages that show to the user.
+- Desired behavior: Red highlights/messages to guide users that something went wrong.
+- Actual behavior: Console error messages exist. These are mainly for programmers & debugging.

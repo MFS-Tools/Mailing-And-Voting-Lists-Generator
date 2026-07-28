@@ -34,9 +34,9 @@ function processFiles() {
     filteringPipeline(inputCSVData, constituencyMap);
   } else {
     console.error("Error: Some files not loaded.");
-    console.error("inputCSV: ", inputCSVData);
-    console.error("dataConstituencyMap: ", constituencyMap);
-    console.error("dualAppointments: ", dualAppointments);
+    console.error("Congress Data CSV: ", inputCSVData);
+    console.error("Data Map CSV: ", constituencyMap);
+    console.error("Dual Constituencies CSV: ", dualAppointments);
   }
 }
 
@@ -63,7 +63,6 @@ function processFiles() {
  */
 function loadCsvOnChange(onComplete) {
   const loadFunc = function(event) {
-    console.log("loadCSV called");
     const file = event.target.files[0];
     if (file) {
       Papa.parse(file, {
@@ -74,6 +73,7 @@ function loadCsvOnChange(onComplete) {
           console.log("File loaded: ", event.target.files[0].name);
         },
         error: function(error) { // Error log in case CSV is formatted wrong
+          console.error(`Error loading ${event.target.files[0].name}. See below.`)
           console.error("Parsing error: ", error);
         },
       });
@@ -122,37 +122,68 @@ function loadCsvOnChange(onComplete) {
  *     - Create a download button.
  */
 function filteringPipeline(rawData, dataMap) {
+  console.group("Constituency Mapping");
+  console.log("Determining constituencies for each row:")
   const data = convertDataToMFSData(rawData, dataMap);
   const constituencyRawData = data[0];
   const unknownConstituency = data[1];
+  if (unknownConstituency.length === 0) {
+    console.log("Success. All constituencies mapped correctly.");
+  } else {
+    console.error(`${unknownConstituency.length} constituencies not found.`);
+    console.error("Unknown Constituency Data: ", unknownConstituency);
+  }
+  console.groupEnd();
 
+  console.group("One Constituency Per Email");
+  console.log("Selecting one constituency for each email by highest FTE:")
   const constituencyData = selectHighestFTEConstituencies(constituencyRawData);
   const knownConstituencies = constituencyData[0];
-  const unknownDualConstituencies = constituencyData[1];
-  console.log(unknownDualConstituencies);
+  let unknownDualConstituencies = constituencyData[1]
 
-  // Before proceeding: resolve unknown dual constituencies.
-  // We are using John's Dual Appointment CSV that he maintains.
-  // It contains multiple rows per email, but we only care about
-  // the row where Home matches Constituency.
-  // Constituency is per-row.
-  // Home is the Constituency that John determines in the case of a tie.
-  //
-  // In the future, we could check if this list covers every case in
-  // unknownDualConstituencies above.
-  let dualAppointmentsClean = [];
-  for (row of dualAppointments) {
-    console.log(row);
-    if (row["Home"] == row["Constituency"]) {
-      knownConstituencies.push(row);
+  if (unknownDualConstituencies.length === 0) {
+    console.log("Success. All main constituencies resolved.");
+  } else {
+    console.log(`${unknownDualConstituencies.length} rows have unresolved constituencies.`);
+    console.log("Attempting to resolve via John's dual constituency list:")
+
+    // Before proceeding: resolve unknown dual constituencies.
+    // We are using John's Dual Appointment CSV that he maintains.
+    // It contains multiple rows per email, but we only care about
+    // the row where Home matches Constituency.
+    // Constituency is per-row.
+    // Home is the Constituency that John determines in the case of a tie.
+    //
+    // In the future, we could check if this list covers every case in
+    // unknownDualConstituencies above.
+    let dualAppointmentsClean = [];
+    for (row of dualAppointments) {
+      if (row["Home"] == row["Constituency"]) {
+        knownConstituencies.push(row);
+      }
+      // Remove these rows from the unknown list.
+      unknownDualConstituencies = unknownDualConstituencies.filter(otherRow => {
+        return !(otherRow["Email"] === row["Email"] && otherRow["Constituency"] === row["Constituency"]);
+      });
+    }
+    knownConstituencies.concat(dualAppointmentsClean);
+
+    if (unknownDualConstituencies.length === 0) {
+      console.log("Success. All main constituencies resolved.");
+    } else {
+      console.error(`${unknownDualConstituencies.length} rows have unresolved constituencies.`);
+      console.error("Unresolved Dual Constituency Data: ", unknownDualConstituencies);
     }
   }
+  console.groupEnd();
 
-  console.log(knownConstituencies);
-  knownConstituencies.concat(dualAppointmentsClean);
-  console.log(knownConstituencies);
-    
+  console.group("FTE Filtering");
+  console.log("Filtering rows by >= 0.5 Total FTE:");
+  let lengthBeforeFiltering = knownConstituencies.length;
   const filteredByFTE = filterRawDataByTotalFTE(knownConstituencies);
+  let numFilteredByFTE = lengthBeforeFiltering - knownConstituencies.length;
+  console.log(`${numFilteredByFTE} faculty filtered due to FTE < 0.5`);
+  console.groupEnd();
 
   // Adding John to the mailing lists.
   const uhmfsRow =
@@ -172,7 +203,10 @@ function filteringPipeline(rawData, dataMap) {
       "TOT_FTE":          null,
     };
 
-
+  console.group("Generating Files");
+  console.log(`${filteredByFTE.length} total faculty.`);
+  console.log("Generating CSVs...");
+  console.groupEnd();
 
   const rows = filteredByFTE;
 
@@ -190,11 +224,6 @@ function filteringPipeline(rawData, dataMap) {
  */
 function filterRawDataByTotalFTE(rawData) {
   const filteredData = rawData.filter((row) => parseFloat(row["TOT_FTE"]) >= 0.5);
-
-  const numEntriesFiltered = rawData.length - filteredData.length;
-  console.log("Total FTE >= 0.5:", numEntriesFiltered, "rows filtered out.");
-
-  console.log(filteredData);
   return filteredData;
 }
 
@@ -276,9 +305,6 @@ function convertDataToMFSData(inputData, dataMapCSV) {
     }
   }
 
-  console.log(constituencyData);
-  console.log(unknownConstituency);
-  console.log("Mapping raw data to constituencies:", unknownConstituency.length, "entries have unknown constituency");
   return [constituencyData, unknownConstituency];
 }
 
@@ -352,7 +378,6 @@ function selectHighestFTEConstituencies(inputData) {
       if (tied) { // Add all the rows with this email to be manually checked
 
         unresolvedDualConstituencies.push(...rows);
-        console.log(unresolvedDualConstituencies);
 
       } else { // Not tied, select the row with the highest FTE.
 
@@ -371,11 +396,6 @@ function selectHighestFTEConstituencies(inputData) {
       }
     }
   }
-  
-  console.log(resolvedConstituencies);
-  console.log(unresolvedDualConstituencies);
-  console.log("Choosing the highest FTE:", unresolvedDualConstituencies.length, "people have constituencies with tied FTEs");
-
   return [resolvedConstituencies, unresolvedDualConstituencies];
 }
 
@@ -505,7 +525,7 @@ function generateOpaVoteCSVs(rows, divName, uhmfsEmailRow) {
     let singleConstituencyData = restOfData.filter(row => row["Constituency"] === constituencyName);
     restOfData = restOfData.filter(row => row["Constituency"] !== constituencyName);
 
-    generateSingleOpaVoteCSV(ConstituencyData, constituencyName, divName, uhmfsEmailRow);
+    generateSingleOpaVoteCSV(singleConstituencyData, constituencyName, divName, uhmfsEmailRow);
   }
 }
 
