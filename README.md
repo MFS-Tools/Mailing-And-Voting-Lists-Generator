@@ -103,7 +103,8 @@ git clone https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git
 
 You can also paste https://github.com/kylebueche/MFS-Spreadsheet-Sorter.git into GitHub Desktop.
 
-
+The only dependency is [PapaParse](https://www.papaparse.com/), a fast CSV file parser and writer.
+PapaParse saves lots of headaches on file I/O, edge-case, & optimization for CSV loading.
 
 <hr>
 
@@ -146,43 +147,43 @@ Steps in the algorithm:
 7. Generate Congress list & Senator Statistics
 8. Create download buttons for all generated lists.
 
-### Dependencies
-
-The only dependency is [PapaParse](https://www.papaparse.com/), a fast CSV file parser and writer.
-PapaParse saves lots of headaches on file I/O, edge-case, & optimization for CSV loading.
-
-Dependencies are located in `src/deps/`
-
 <hr>
 
-### Testing Locally
+### Testing Locally as an HTML File
 
 You can test this plugin locally by pasting the local filepath of `src/mfs-spreadsheet-sorter.html` directly into your browser.
 
-The script at the end of the HTML file runs on local devices only.
-It loads the CSS/JavaScript that WordPress would normally load through PHP.
+There was a bit of engineering to get local testing working. In the plugin, WordPress loads the JavaScript and CSS files through PHP because the HTML is just being injected into an existing website.
+Normally, HTML files load JS and CSS in the `<header>` block, but we don't have access to it.
+Instead, the HTML has a `<script>` tag that detects whether the site is being run locally.
+If it is local, the script adds the JS and CSS files dynamically.
 
-The HTML file contains a script that loads the CSS and JavaScript files, only when a local host is detected.
-The plugin will load as it's own website, and you just have to refresh the page when you edit the code.
+<hr>
+
+### Testing Locally on LocalWP
+
+For testing WordPress plugins, you will need LocalWP installed.
+Faulty plugins can crash WordPress, so please test them locally.
+
+1. Download [LocalWP](https://localwp.com/) and start a new WordPress website.
+2. Run the site, and open it in a browser.
+3. Navigate to plugins, and add a new plugin.
+4. Locate and select the zip file located in `build/`
+5. Create a new page, and add a shortcode block with the text `[mfs_spreadsheet_sorter]` inside.
+6. Save the page and open it in a new tab.
+7. Test whether the plugin works.
 
 <hr>
 
 ## Building the WordPress Plugin
 
-WordPress
-
-### Building
-
-Once the plugin works, you can build by running the `build.bat` script on Windows, or the `build.sh` script on Mac/Linux.
+You can build the plugin by running the `build.bat` script on Windows, or the `build.sh` script on Mac/Linux.
 
 The built plugin will be a .zip file located in the `build/` folder.
 
-### Testing the Built Plugin
-
-For testing WordPress plugins, you will need LocalWP installed.
-Faulty plugins can crash WordPress, so please test them locally.
-
-TODO: Add instructions for installing a WordPress plugin to both LocalWP and the school WP site.
+> [!NOTE]
+> So far, the `build.sh` script for Mac & Linux is untested.
+> All it does is zip the `src` folder. Manual zipping will work too.
 
 ## Details of the WordPress Plugin
 
@@ -303,3 +304,7 @@ The 2026 Congress HR Header format is baked into the code.
 - As long as HR's format stays consistent, this is not a problem.
 - Column names are referenced with exact strings in code.
 - Fixing this would require over-engineering and a lot more code complexity.
+
+Files must be downloaded one by one.
+- A little tedious, but zipping them in code is a bit complicated.
+- JSZip might be able to help with this
