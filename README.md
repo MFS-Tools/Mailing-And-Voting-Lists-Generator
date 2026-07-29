@@ -9,6 +9,7 @@ A tool that generates ListServ & OpaVote lists for UHM faculty constituencies & 
 - [Programmer's Guide](#programmers-guide)
 - [Building the WordPress Plugin](#building-the-wordpress-plugin)
 - [Deploying to WordPress](#deploying-to-wordpress)
+- [Known Issues](#known-issues)
 
 ## User Guide
 
@@ -177,6 +178,9 @@ Faulty plugins can crash WordPress, so please test them locally.
 
 ## Building the WordPress Plugin
 
+WordPress plugins must be a zipped folder with a PHP file.
+This PHP file adds the HTML & code into the `mfs_spreadsheet_sorter` shortcode.
+
 You can build the plugin by running the `build.bat` script on Windows, or the `build.sh` script on Mac/Linux.
 
 The built plugin will be a .zip file located in the `build/` folder.
@@ -185,101 +189,19 @@ The built plugin will be a .zip file located in the `build/` folder.
 > So far, the `build.sh` script for Mac & Linux is untested.
 > All it does is zip the `src` folder. Manual zipping will work too.
 
-## Details of the WordPress Plugin
+<hr>
 
-WordPress plugins must be a zipped folder with a PHP file specifying the plugin details.
+## Deploying the WordPress Plugin
 
-The current PHP file does the following tasks:
-- Injects HTML into the `mfs-spreadsheet-sorter` shortcode.
-- Enqueus custom CSS and JavaScript to run on the WordPress frontend
+Deploying to the MFS WordPress site is more complicated than using LocalWP.
 
-In WordPress, you cannot use the usual HTML syntax for CSS or JavaScript:
-
-```HTML
-<head>
-    <link rel="stylesheet" href="my-style.css">
-    <script src="my-script.js">
-</head>
-```
-
-Reasons this isn't allowed:
-- This WordPress plugin just pastes HTML into an existing site. The site already has a head block.
-- The pasted HTML cannot see other files bundled in the plugin. CSS and JS have to be loaded with PHP.
-
-Instead, a WordPress PHP plugin adds the JavaScript and CSS files by *enqueuing* them:
-
-```PHP
-wp_enqueue_script(
-    'my-script-name',
-    plugins_url( 'my-script.js' __FILE__ ),
-    array(), // dependencies list
-    '1.0.0', // version
-    array( // extra settings
-        'strategy' => 'defer' // Wait till all HTML has loaded to run this script
-        'in-footer' => false
-    )
-);
-
-wp_enqueue_style(
-    'my-style-name'
-    plugins_url( 'my-style.css', __FILE__ ),
-    array() // dependencies list
-    '1.0.0' // version
-    'all' // media types (PC, phone, etc)
-);
-```
-
-Future development shouldn't need to modify the existing PHP file.
-
-If in doubt, refer to the WordPress PHP API docs.
-
-### Definitions
-
-- **Constituency:** A named group that some faculty belong to.
-    - Faculty may have multiple constituencies.
-    - As of 2026 there are 19 constituencies.
-- **Total FTE:** The sum of all a faculty member's Full-Time-Employment points.
-- **Eligible Faculty:** Faculty who have Total FTE >= 0.5 (at least half-time employed).
-- **Congress:** The collective Eligible Faculty body (all constituencies combined).
-
-
-
-# Unsure where these things fit:
-
-
-### Challenges
-
-Here are some of the challenges involved that this program overcomes:
-
-- The MFS has its own way of designating "constituency" to each faculty member.
-- The input data provided has multiple confusing columns which correspond to MFS constituencies.
-- The input data contains multiple of the same faculty member on different rows.
-- Sometimes, faculty members have equal participation or FTE in two different constituencies.
-- Sometimes, a faculty member is split across several rows, and multiple rows can map to the same constituency, so their individual FTEs must be totaled.
-  - We want to compare constituencies for a given faculty member, which doesn't always map cleanly to the separate rows.
-
-- Contituencies have a complex identification process.
-
-
-#### WordPress Overview:
-
-WordPress Plugins allow you to paste HTML into the body of an existing site (via shortcode), but style and script tags will not run properly.
-WordPress instead uses PHP, which lets you enqueue both CSS and JS files.
-
-WordPress uses a PHP file that registers a shortcode.
-When the shortcode is found on a page in the website, it calls whatever function you define.
-The return value of this function is pasted, and replaces the shortcode.
-If the return value is HTML, it is inserted into the div where the shortcode used to be.
-
-The PHP file currently registers shortcode that does the following:
-
-1. Enqueues the CSS file
-2. Enqueues the JavaScript file
-3. Injects the HTML snippet into the website.
-
-The HTML file should not contain a Head or Body block.
-In local testing, the HTML5 spec can infer where these will go.
-Using a Head or Body can cause issues on the WP site, because only one of each is allowed.
+1. Ensure you have [FileZilla](https://filezilla-project.org/) installed.
+2. Ensure you're an admin on the UHMFS WordPress site, and that you can log in.
+3. Ensure that you are authorized to edit /1/uhmfs through webedit (may involve emails to ITS).
+4. Browse to `/1/uhmfs/wp-content/plugins/` and upload the zipped plugin.
+5. If not already created, create a new page and add a shortcode block.
+6. Add `[mfs_spreadsheet_sorter]` into the shortcode block.
+7. Save & view the website to test that it works.
 
 ## Known Issues:
 
@@ -287,9 +209,13 @@ When the Dual Appointments CSV does not cover all detected dual appointments, th
 - Desired behavior: The user is alerted that some faculty are not accounted for. The user is instructed to fix the issue.
 - Actual behavior: The program removes detected dual appointments from the congress list, and adds CSV-provided dual appointments to the congress list.
 
+<hr>
+
 Pressing the "Process Files" button over and over adds more and more duplicate files to the download section.
 - Desired behavior: Every time "Process Files" is run, the downloads section should be cleared of any previous files
 - Actual behavior: Duplicate files stack up, and they are identically-named so they can't be distinguished.
+
+<hr>
 
 Build Script on Mac or Linux is untested
 - Windows build.bat script is tested and working.
@@ -300,14 +226,20 @@ Build Script on Mac or Linux is untested
   - Prints the location of the plugin to the console
   - Waits for the user to press a key to exit (so they can see the messages).
 
+<hr>
+
 The 2026 Congress HR Header format is baked into the code.
 - As long as HR's format stays consistent, this is not a problem.
 - Column names are referenced with exact strings in code.
 - Fixing this would require over-engineering and a lot more code complexity.
 
+<hr>
+
 Files must be downloaded one by one.
 - A little tedious, but zipping them in code is a bit complicated.
 - JSZip might be able to help with this
+
+<hr>
 
 There are no error messages that show to the user.
 - Desired behavior: Red highlights/messages to guide users that something went wrong.
