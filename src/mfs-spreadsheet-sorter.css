@@ -1,0 +1,151 @@
+.mfs-dashboard {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  color: #333333;
+}
+
+.mfs-dashboard h2 {
+  font-size: 1.5rem;
+  color: #1e1e1e;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.mfs-section {
+  margin-bottom: 2rem;
+}
+
+.mfs-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Fields */
+.mfs-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mfs-field-group label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #4a5568;
+}
+
+.mfs-file-input {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.mfs-file-input:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(66, 153, 255, 0.15);
+}
+
+.mfs-file-input.red-outline {
+  border-color: red;
+  box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.15);
+}
+
+.mfs-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+#process-button {
+  background-color: #3882f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(56, 130, 246, 0.2);
+}
+
+#process-button:hover {
+  background-color: #2563eb;
+}
+
+#process-button:active {
+  transform: scale(0.98);
+}
+
+.mfs-downloads-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 600px) {
+  .mfs-downloads-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.mfs-download-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.mfs-download-card h3 {
+  font-size: 1rem;
+  color: #2d3748;
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+}
+
+.mfs-download-card ul {
+  margin: 0;
+  padding-left: 1.25 rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.mfs-download-card ul li {
+  margin-bottom: 0.5rem;
+}
+
+.mfs-download-card ul li:last-child {
+  margin-bottom: 0;
+}
+
+.mfs-file-input::file-selector-button {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin-right: 10px;
+}
+
+.mfs-file-input::file-selector-button:hover {
+  background-color: #cbd5e1;
+}
