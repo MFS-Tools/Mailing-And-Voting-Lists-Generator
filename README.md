@@ -7,8 +7,7 @@ A tool that generates ListServ & OpaVote lists for UHM faculty constituencies & 
 
 - [User Guide](#user-guide)
 - [Programmer's Guide](#programmers-guide)
-- [Building the WordPress Plugin](#building-the-wordpress-plugin)
-- [Deploying to WordPress](#deploying-to-wordpress)
+- [Deploying the WordPress Plugin](#deploying-the-wordpress-plugin)
 - [Known Issues](#known-issues)
 
 ## User Guide
@@ -148,7 +147,7 @@ Steps in the algorithm:
 7. Generate Congress list & Senator Statistics
 8. Create download buttons for all generated lists.
 
-<hr>
+<br>
 
 ### Testing Locally as an HTML File
 
@@ -159,7 +158,7 @@ Normally, HTML files load JS and CSS in the `<header>` block, but we don't have 
 Instead, the HTML has a `<script>` tag that detects whether the site is being run locally.
 If it is local, the script adds the JS and CSS files dynamically.
 
-<hr>
+<br>
 
 ### Testing Locally on LocalWP
 
@@ -174,11 +173,7 @@ Faulty plugins can crash WordPress, so please test them locally.
 6. Save the page and open it in a new tab.
 7. Test whether the plugin works.
 
-<hr>
-
-## Building the WordPress Plugin
-
-WordPress plugins must be a zipped folder with a PHP file.
+For LocalWP, plugins must be a zipped folder with a PHP file.
 This PHP file adds the HTML & code into the `mfs_spreadsheet_sorter` shortcode.
 
 You can build the plugin by running the `build.bat` script on Windows, or the `build.sh` script on Mac/Linux.
@@ -209,13 +204,13 @@ When the Dual Appointments CSV does not cover all detected dual appointments, th
 - Desired behavior: The user is alerted that some faculty are not accounted for. The user is instructed to fix the issue.
 - Actual behavior: The program removes detected dual appointments from the congress list, and adds CSV-provided dual appointments to the congress list.
 
-<hr>
+<br>
 
 Pressing the "Process Files" button over and over adds more and more duplicate files to the download section.
 - Desired behavior: Every time "Process Files" is run, the downloads section should be cleared of any previous files
 - Actual behavior: Duplicate files stack up, and they are identically-named so they can't be distinguished.
 
-<hr>
+<br>
 
 Build Script on Mac or Linux is untested
 - Windows build.bat script is tested and working.
@@ -226,20 +221,20 @@ Build Script on Mac or Linux is untested
   - Prints the location of the plugin to the console
   - Waits for the user to press a key to exit (so they can see the messages).
 
-<hr>
+<br>
 
 The 2026 Congress HR Header format is baked into the code.
 - As long as HR's format stays consistent, this is not a problem.
 - Column names are referenced with exact strings in code.
 - Fixing this would require over-engineering and a lot more code complexity.
 
-<hr>
+<br>
 
 Files must be downloaded one by one.
 - A little tedious, but zipping them in code is a bit complicated.
 - JSZip might be able to help with this
 
-<hr>
+<br>
 
 There are no error messages that show to the user.
 - Desired behavior: Red highlights/messages to guide users that something went wrong.

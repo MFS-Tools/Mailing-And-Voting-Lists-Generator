@@ -27,16 +27,51 @@ dualAppointmentsInput.addEventListener("change", loadCsvOnChange(results => {
 
 processButton.addEventListener("click", processFiles);
 
+function clearErrorMsgs() {
+  const errorMsgBox = document.getElementById("error-msg-box");
+  const errorMsg = document.getElementById("error-msg");
+  while (errorMsg.firstChild) {
+    errorMsg.removeChild(errorMsg.firstChild);
+  }
+  errorMsgBox.classList.add("hidden");
+}
+
+function addErrorMsg(msg, ...objects) {
+  console.error(msg);
+  if (msg.length > 200) {
+    msg = msg.substring(0, 200) + "\n... (truncated, see console for full message)";
+  }
+  for (const obj of objects) {
+    console.error(obj.name, obj);
+    let objStr = ("\n" + JSON.stringify(obj, space="  ")).substring(0, 200) + "\n... (object truncated, see console for full object description)";
+    msg += objStr;
+  }
+  const errorMsgBox = document.getElementById("error-msg-box");
+  const errorMsg = document.getElementById("error-msg");
+  const newMsg = document.createElement("li");
+  newMsg.innerText = msg;
+  errorMsg.appendChild(newMsg);
+  errorMsgBox.classList.remove("hidden");
+}
+
+// >> Main App Entrypoint <<
 function processFiles() {
+  clearErrorMsgs();
   if (inputCSVData != null
       && constituencyMap != null
       && dualAppointments != null) {
     filteringPipeline(inputCSVData, constituencyMap);
   } else {
-    console.error("Error: Some files not loaded.");
-    console.error("Congress Data CSV: ", inputCSVData);
-    console.error("Data Map CSV: ", constituencyMap);
-    console.error("Dual Constituencies CSV: ", dualAppointments);
+    addErrorMsg("Error: Some files not loaded.");
+    if (inputCSVData == null) {
+      addErrorMsg("Congress Data CSV: ", inputCSVData);
+    }
+    if (constituencyMap == null) {
+      addErrorMsg("Data Map CSV: ", constituencyMap);
+    }
+    if (dualAppointments == null) {
+    addErrorMsg("Dual Constituencies CSV: ", dualAppointments);
+    }
   }
 }
 
@@ -73,8 +108,8 @@ function loadCsvOnChange(onComplete) {
           console.log("File loaded: ", event.target.files[0].name);
         },
         error: function(error) { // Error log in case CSV is formatted wrong
-          console.error(`Error loading ${event.target.files[0].name}. See below.`)
-          console.error("Parsing error: ", error);
+          addErrorMsg(`Error loading ${event.target.files[0].name}. See below.`);
+          addErrorMsg("Parsing error: " + error.message);
         },
       });
     }
@@ -130,8 +165,8 @@ function filteringPipeline(rawData, dataMap) {
   if (unknownConstituency.length === 0) {
     console.log("Success. All constituencies mapped correctly.");
   } else {
-    console.error(`${unknownConstituency.length} constituencies not found.`);
-    console.error("Unknown Constituency Data: ", unknownConstituency);
+    addErrorMsg(`${unknownConstituency.length} constituencies not found.`);
+    addErrorMsg("Unknown Constituency Data: ", unknownConstituency);
   }
   console.groupEnd();
 
@@ -171,8 +206,8 @@ function filteringPipeline(rawData, dataMap) {
     if (unknownDualConstituencies.length === 0) {
       console.log("Success. All main constituencies resolved.");
     } else {
-      console.error(`${unknownDualConstituencies.length} rows have unresolved constituencies.`);
-      console.error("Unresolved Dual Constituency Data: ", unknownDualConstituencies);
+      addErrorMsg(`${unknownDualConstituencies.length} rows have unresolved constituencies.`);
+      addErrorMsg("Unresolved Dual Constituency Data: ", unknownDualConstituencies);
     }
   }
   console.groupEnd();
@@ -243,6 +278,34 @@ function filterRawDataByTotalFTE(rawData) {
  * "UH Deptid Branc", "UH Deptid Divis", "MFS_codes".
  */
 function convertDataToMFSData(inputData, dataMapCSV) {
+
+  let requiredKeys = new Set([
+    "Name",
+    "Email",
+    "Department Descr",
+    "UH Deptid Divis",
+    "UH Deptid Branc",
+    "UH Deptid Secti",
+    "TenureStat",
+    "Tenure Desc",
+    "FTE",
+    "TOT_FTE"
+  ]);
+
+  for (key of requiredKeys) {
+    console.log(inputData);
+    if (Object.hasOwn(inputData[0], key)) {
+      requiredKeys.delete(key);
+    }
+  }
+  if (requiredKeys.size > 0) {
+    let errStr = "Error, the Congress CSV is missing the following headers:"
+    for (key of requiredKeys) {
+      errStr += " " + key + ",";
+    }
+    errStr = errStr.substring(0, errStr.length - 1); // remove trailing comma
+    addErrorMsg(errStr);
+  }
 
   // These are the keys that have identify constituency
   // Some constituencies only depend on keyCol1

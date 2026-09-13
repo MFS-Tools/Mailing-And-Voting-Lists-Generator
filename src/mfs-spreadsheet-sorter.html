@@ -9,16 +9,20 @@
       </div>
 
       <div class="mfs-field-group">
-        <label for="constituency-map-input">Translation Table (Maps HR Codes to MFS Constituencies)</label>
+        <label for="constituency-map-input">Constituency Data Mapping (Translation Table maps HR Codes to MFS Constituencies)</label>
         <input id="constituency-map-input" class="mfs-file-input" type="file">
       </div>
 
       <!-- TODO: Maybe in JS, we could check for an exact match between dual appointments found by the program, compared to those already accounted for in the record? -->
       <!-- ^ This could help with updating the dual appointments record -->
       <div class="mfs-field-group">
-        <label for="dual-appointments">Existing Dual Appointment Record CSV file</label>
+        <label for="dual-appointments">Dual Appointment Record CSV file</label>
         <input id="dual-appointments" class="mfs-file-input" type="file">
       </div>
+    </div>
+
+    <div class="mfs-error-msg-box hidden" id="error-msg-box">
+      <ul class="mfs-error-msg" id="error-msg"></ul>
     </div>
 
     <div class="mfs-btn-container">
@@ -85,7 +89,7 @@
 -->
 
 <!-- Only modify this code if you understand how WordPress Plugins work. -->
-<!-- See "Local Testing" and "Details of the WordPress Plugin" in the README.md -->
+<!-- See "Programmer's Guide" and "Deploying the WordPress Plugin" in the README.md -->
 <script>
 
   // Local testing only. WP Plugin build loads JS and CSS through PHP.

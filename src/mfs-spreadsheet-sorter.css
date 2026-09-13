@@ -66,6 +66,23 @@
   box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.15);
 }
 
+.mfs-error-msg-box.hidden {
+  display: none;
+}
+
+.mfs-error-msg-box {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: red;
+  background-color: #f7fafc;
+  border: 1px solid red;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
 .mfs-btn-container {
   display: flex;
   justify-content: flex-end;
