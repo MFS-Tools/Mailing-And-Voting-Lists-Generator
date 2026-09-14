@@ -27,7 +27,9 @@ dualAppointmentsInput.addEventListener("change", loadCsvOnChange(results => {
 
 processButton.addEventListener("click", processFiles);
 
+let errorMsgSent = false;
 function clearErrorMsgs() {
+  errorMsgSent = false;
   const errorMsgBox = document.getElementById("error-msg-box");
   const errorMsg = document.getElementById("error-msg");
   while (errorMsg.firstChild) {
@@ -37,13 +39,17 @@ function clearErrorMsgs() {
 }
 
 function addErrorMsg(msg, ...objects) {
+  errorMsgSent = true;
   console.error(msg);
   if (msg.length > 200) {
     msg = msg.substring(0, 200) + "\n... (truncated, see console for full message)";
   }
   for (const obj of objects) {
-    console.error(obj.name, obj);
-    let objStr = ("\n" + JSON.stringify(obj, space="  ")).substring(0, 200) + "\n... (object truncated, see console for full object description)";
+    console.error(obj);
+    let objStr = ("\n" + JSON.stringify(obj, space="  "));
+    if (objStr.length > 400) {
+      objStr = objStr.substring(0, 400) + "\n... (object truncated, see console for full object description)";
+    }
     msg += objStr;
   }
   const errorMsgBox = document.getElementById("error-msg-box");
@@ -54,9 +60,29 @@ function addErrorMsg(msg, ...objects) {
   errorMsgBox.classList.remove("hidden");
 }
 
+function clearResults() {
+  const congressDownload = document.getElementById("congress-download");
+  const listservDownload = document.getElementById("listserv-download");
+  const opavoteDownload = document.getElementById("opavote-download");
+  const senatorStatisticsDownload = document.getElementById("senator-statistics-download");
+  while (congressDownload.firstChild) {
+    congressDownload.removeChild(congressDownload.firstChild);
+  }
+  while (listservDownload.firstChild) {
+    listservDownload.removeChild(listservDownload.firstChild);
+  }
+  while (opavoteDownload.firstChild) {
+    opavoteDownload.removeChild(opavoteDownload.firstChild);
+  }
+  while (senatorStatisticsDownload.firstChild) {
+    senatorStatisticsDownload.removeChild(senatorStatisticsDownload.firstChild);
+  }
+}
+
 // >> Main App Entrypoint <<
 function processFiles() {
   clearErrorMsgs();
+  clearResults();
   if (inputCSVData != null
       && constituencyMap != null
       && dualAppointments != null) {
@@ -206,8 +232,8 @@ function filteringPipeline(rawData, dataMap) {
     if (unknownDualConstituencies.length === 0) {
       console.log("Success. All main constituencies resolved.");
     } else {
-      addErrorMsg(`${unknownDualConstituencies.length} rows have unresolved constituencies.`);
-      addErrorMsg("Unresolved Dual Constituency Data: ", unknownDualConstituencies);
+      addErrorMsg(`${unknownDualConstituencies.length} rows have unresolved constituencies. Please check the Dual Constituency Record CSV`);
+      addErrorMsg("Could not find row(s) matching: ", ... unknownDualConstituencies.map(row => [row["Name"], row["Email"], row["Constituency"]]));
     }
   }
   console.groupEnd();
@@ -245,10 +271,12 @@ function filteringPipeline(rawData, dataMap) {
 
   const rows = filteredByFTE;
 
-  generateCongressList(rows, "congress-download", uhmfsRow);
-  generateListServCSVs(rows, "listserv-download", uhmfsRow);
-  generateOpaVoteCSVs(rows, "opavote-download", uhmfsRow);
-  generateSenatorStatistics(rows, "senator-statistics-download");
+  if (!errorMsgSent) {
+    generateCongressList(rows, "congress-download", uhmfsRow);
+    generateListServCSVs(rows, "listserv-download", uhmfsRow);
+    generateOpaVoteCSVs(rows, "opavote-download", uhmfsRow);
+    generateSenatorStatistics(rows, "senator-statistics-download");
+  }
 }
 
 /* 
@@ -470,6 +498,7 @@ function generateCongressList(rows, divName, uhmfsEmailRow) {
   createCSVDownloadButton(congress, filename, ",", true, divName);
 }
 
+/* unused right now */
 function generateCongressListServ(rows, divName, uhmfsEmailRow) {
 
 }
