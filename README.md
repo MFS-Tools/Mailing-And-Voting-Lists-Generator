@@ -190,38 +190,9 @@ The built plugin will be a .zip file located in the `build/` folder.
 
 Deploying to the MFS WordPress site is more complicated than using LocalWP.
 
-1. Ensure you have [FileZilla](https://filezilla-project.org/) installed.
-2. Ensure you're an admin on the UHMFS WordPress site, and that you can log in.
-3. Ensure that you are authorized to edit /1/uhmfs through webedit (may involve emails to ITS).
-4. Browse to `/1/uhmfs/wp-content/plugins/` and upload the zipped plugin.
-5. If not already created, create a new page and add a shortcode block.
-6. Add `[mfs_spreadsheet_sorter]` into the shortcode block.
-7. Save & view the website to test that it works.
+Details in the Admin Tools Google Doc.
 
 ## Known Issues:
-
-When the Dual Appointments CSV does not cover all detected dual appointments, the program fails silently.
-- Desired behavior: The user is alerted that some faculty are not accounted for. The user is instructed to fix the issue.
-- Actual behavior: The program removes detected dual appointments from the congress list, and adds CSV-provided dual appointments to the congress list.
-
-<br>
-
-Pressing the "Process Files" button over and over adds more and more duplicate files to the download section.
-- Desired behavior: Every time "Process Files" is run, the downloads section should be cleared of any previous files
-- Actual behavior: Duplicate files stack up, and they are identically-named so they can't be distinguished.
-
-<br>
-
-Build Script on Mac or Linux is untested
-- Windows build.bat script is tested and working.
-- Mac/Linux build.sh script is untested and unverified.
-- Desired behavior for both scripts:
-  - Deletes old files in `build/`
-  - Zips the entire `src/` directory into `build/mfs-spreadsheet-sorter.zip`
-  - Prints the location of the plugin to the console
-  - Waits for the user to press a key to exit (so they can see the messages).
-
-<br>
 
 The 2026 Congress HR Header format is baked into the code.
 - As long as HR's format stays consistent, this is not a problem.
@@ -236,6 +207,11 @@ Files must be downloaded one by one.
 
 <br>
 
-There are no error messages that show to the user.
-- Desired behavior: Red highlights/messages to guide users that something went wrong.
-- Actual behavior: Console error messages exist. These are mainly for programmers & debugging.
+Build Script on Mac or Linux is untested
+- Windows build.bat script is tested and working.
+- Mac/Linux build.sh script is untested and unverified.
+- Desired behavior for both scripts:
+  - Deletes old files in `build/`
+  - Zips the entire `src/` directory into `build/mfs-spreadsheet-sorter.zip`
+  - Prints the location of the plugin to the console
+  - Waits for the user to press a key to exit (so they can see the messages).
